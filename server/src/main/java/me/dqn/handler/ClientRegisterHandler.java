@@ -18,6 +18,8 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
 
     /**
      * 从msg中获取响应的客户端信息，包括代理的端口等
+     * todo: 注册完成后，打开真实端口，可以接收用户请求。（创建outer channel）
+     * todo: 注册完成后，加入心跳队伍
      * 注册channel
      *
      * @param ctx
