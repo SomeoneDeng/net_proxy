@@ -1,0 +1,6 @@
+registerPort: 9999
+clients:
+  - type: tcp
+    port: 3307
+    realPort: 3306
+    desc: mysql server
