@@ -21,6 +21,10 @@ public class ClientChannelManager {
         return channelMap.get(key);
     }
 
+    public static void removeChannel(String key, Channel chan) {
+        channelMap.remove(key, chan);
+    }
+
     public static Integer size() {
         return channelMap.size();
     }

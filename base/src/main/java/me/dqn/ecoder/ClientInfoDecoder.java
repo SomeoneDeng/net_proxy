@@ -3,9 +3,7 @@ package me.dqn.ecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import me.dqn.protocol.ClientInfo;
-
-import java.nio.ByteOrder;
+import me.dqn.protocol.TransData;
 
 /**
  * @author dqn
@@ -20,9 +18,23 @@ public class ClientInfoDecoder extends LengthFieldBasedFrameDecoder {
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
-        ClientInfo clientInfo = new ClientInfo();
-        clientInfo.setKey(in.readInt());
-        clientInfo.setPort(in.readInt());
-        return clientInfo;
+        TransData transData = new TransData();
+        int type = in.readInt();
+        int fromPort = in.readInt();
+        int toPort = in.readInt();
+        int size = in.readInt();
+        byte[] bytes = null;
+        if (type == TransData.TYPE_DT) {
+            int len = in.readableBytes();
+            // TODO: 2019/3/22 大小校验
+            bytes = new byte[(int) size];
+            in.readBytes(bytes);
+        }
+        transData.setType(type);
+        transData.setFromPort(fromPort);
+        transData.setToPort(toPort);
+        transData.setDataSize(size);
+        transData.setData(bytes);
+        return transData;
     }
 }

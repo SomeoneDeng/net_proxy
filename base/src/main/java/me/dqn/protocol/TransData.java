@@ -1,61 +1,104 @@
 package me.dqn.protocol;
 
+import java.io.Serializable;
+
 /**
- * 数据包格式
- * 用于server和client之间传递数据
- *
  * @author dqn
- * created at 2019/3/12 3:40
+ * created at 2019/3/13 17:11
  */
-public class TransData {
+public class TransData implements Serializable {
+    private static final long serialVersionUID = -8076742702215522708L;
+    public static int TYPE_REG = 1;
+    public static int TYPE_DT = 2;
+    private int fromPort;
+    private int toPort;
     /**
-     * 用户ip
+     * info: 1, data: 2
      */
-    private String ip;
+    private int type;
+
+    private int dataSize;
 
     /**
-     * 用户端口
-     */
-    private Integer uPort;
-
-    /**
-     * 服务器端口
-     */
-    private Integer sPort;
-
-    /**
-     * 会话id
-     */
-    private Long sessionID;
-
-    /**
-     * 真实服务器地址
-     */
-    private String remoteAddress;
-
-    /**
-     * 消息类型
-     */
-    private byte type;
-
-    /**
-     * 代理类型
-     */
-    private byte proxyType;
-
-    /**
-     * 优先级
-     */
-    private byte priority;
-
-    /**
-     * 命令
-     */
-    private byte[] command;
-
-    /**
-     * 数据
+     * if type 2
      */
     private byte[] data;
 
+    public static class Builder {
+        private TransData transData;
+
+        public Builder() {
+            transData = new TransData();
+        }
+
+        public Builder fromPort(int fromPort) {
+            transData.setFromPort(fromPort);
+            return this;
+        }
+
+        public Builder toPort(int toPort) {
+            transData.setToPort(toPort);
+            return this;
+        }
+
+        public Builder type(int type) {
+            transData.setType(type);
+            return this;
+        }
+
+        public Builder dataSize(int size) {
+            transData.setDataSize(size);
+            return this;
+        }
+
+        public Builder data(byte[] data) {
+            transData.setData(data);
+            return this;
+        }
+
+        public TransData build() {
+            return this.transData;
+        }
+
+    }
+
+    public int getDataSize() {
+        return dataSize;
+    }
+
+    public void setDataSize(int dataSize) {
+        this.dataSize = dataSize;
+    }
+
+    public int getFromPort() {
+        return fromPort;
+    }
+
+    public void setFromPort(int fromPort) {
+        this.fromPort = fromPort;
+    }
+
+    public int getToPort() {
+        return toPort;
+    }
+
+    public void setToPort(int toPort) {
+        this.toPort = toPort;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
+    }
 }

@@ -21,7 +21,7 @@ public class ServerConfigManager {
      * 端口映射表
      * 根据这个可以确定 接收端口，转发给客户端的的端口，以及对应关系
      */
-    private Map<Integer, Integer> portMapping;
+    public static Map<Integer, Integer> portMapping;
 
     /**
      * 配置信息

@@ -1,0 +1,124 @@
+package me.dqn.handler;
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import me.dqn.channel.ClientChannelManager;
+import me.dqn.channel.OuterChannelManager;
+import me.dqn.conf.ServerConfigManager;
+import me.dqn.protocol.TransData;
+import me.dqn.server.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Date;
+
+/**
+ * 注册client信息（获取channel）
+ *
+ * @author dqn
+ * created at 2019/3/13 20:06
+ */
+public class ClientHandler extends ChannelInboundHandlerAdapter {
+    Logger logger = LoggerFactory.getLogger(ClientHandler.class);
+
+    /**
+     * 从msg中获取响应的客户端信息，包括代理的端口等
+     * todo: 注册完成后，打开真实端口，可以接收用户请求。（创建outer channel）
+     * todo: 注册完成后，加入心跳队伍
+     * 注册channel
+     *
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg == null) throw new NullPointerException("未收到ClientInfo");
+        TransData transData = (TransData) msg;
+        // 处理注册
+        if (transData.getType() == TransData.TYPE_REG) {
+            registryClient(ctx, transData);
+        } else if (transData.getType() == TransData.TYPE_DT) {
+            // 处理数据
+            dispatchData(transData);
+        }
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+//        logger.info("读取完成");
+        ctx.flush();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        int realPort = Server.instance().channelIdToRealPort.get(ctx.channel().id());
+        logger.info("与客户端的连接断开，代理的端口为:{},被代理的端口为：{}", realPort, ServerConfigManager.portMapping.get(realPort));
+        ClientChannelManager.removeChannel(realPort + ":" + ServerConfigManager.portMapping.get(realPort), ctx.channel());
+        Server.instance().onlineCount();
+    }
+
+
+    /**
+     * 处理客户端注册
+     *
+     * @param ctx
+     * @param transData
+     */
+    private void registryClient(ChannelHandlerContext ctx, TransData transData) {
+        logger.info("处理客户端注册");
+        // 记录channel id
+        Server.instance().channelIdToRealPort.put(ctx.channel().id(), transData.getToPort());
+        ClientChannelManager.put(transData.getToPort() + ":" + transData.getFromPort(), ctx.channel());
+        Server.instance().onlineCount();
+        openOuterPort(transData.getToPort());
+    }
+
+    /**
+     * 分发client过来的数据包
+     *
+     * @param transData
+     */
+    private void dispatchData(TransData transData) {
+        logger.info("客户端数据处理");
+        if (transData.getData() != null) {
+            logger.info("client data: {}", new String(transData.getData()));
+        }
+        // TODO: 2019/3/22 转发数据
+        Channel channel = ClientChannelManager.getChannel(transData.getToPort() + ":" + transData.getFromPort());
+        byte[] data = ("from server: " + new Date().toString()).getBytes();
+        channel.pipeline().write(new TransData.Builder()
+                .toPort(transData.getToPort())
+                .fromPort(transData.getFromPort())
+                .type(transData.getType())
+                .dataSize(data.length)
+                .data(data)
+                .build());
+    }
+
+
+    /**
+     * 打开真实端口（未打开的话）
+     */
+    private void openOuterPort(Integer port) {
+        if (!OuterChannelManager.exists(port)) {
+            ServerBootstrap bootstrap = new ServerBootstrap();
+            NioEventLoopGroup boss = new NioEventLoopGroup();
+            NioEventLoopGroup worker = new NioEventLoopGroup();
+            ChannelFuture future = bootstrap.group(boss, worker)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                        @Override
+                        protected void initChannel(NioSocketChannel ch) throws Exception {
+                            ch.pipeline()
+                                    .addLast(new OuterHandler());
+                        }
+                    }).bind(port);
+            logger.info("端口 {} 已打开, 对应内网端口：{}", port, ServerConfigManager.portMapping.get(port));
+
+        }
+    }
+}
