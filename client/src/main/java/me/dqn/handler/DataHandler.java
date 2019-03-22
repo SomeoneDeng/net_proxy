@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 处理server过来的数据
+ *
  * @author dqn
  * created at 2019/3/22 8:52
  */
@@ -17,6 +19,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info("active");
     }
+
     // 出现异常的处理
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -58,13 +61,13 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.info("reading..");
-        if (msg == null){
-            if (msg == null) throw new NullPointerException("未收到ClientInfo");
-            return;
+        if (msg == null) {
+            throw new NullPointerException("未收到ClientInfo");
         }
         if (msg instanceof TransData) {
             TransData transData = (TransData) msg;
-            logger.info("{}", new String(transData.getData()));
+            logger.info("sess id: {}", transData.getSess());
+            // TODO: 2019/3/22 维护一个表，保存 每个对真实服务的channel
         }
     }
 }

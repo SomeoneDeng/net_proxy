@@ -10,6 +10,8 @@ public class TransData implements Serializable {
     private static final long serialVersionUID = -8076742702215522708L;
     public static int TYPE_REG = 1;
     public static int TYPE_DT = 2;
+    // session id
+    private long sess;
     private int fromPort;
     private int toPort;
     /**
@@ -56,10 +58,23 @@ public class TransData implements Serializable {
             return this;
         }
 
+        public Builder sess(long sess) {
+            transData.setSess(sess);
+            return this;
+        }
+
         public TransData build() {
             return this.transData;
         }
 
+    }
+
+    public long getSess() {
+        return sess;
+    }
+
+    public void setSess(long sess) {
+        this.sess = sess;
     }
 
     public int getDataSize() {

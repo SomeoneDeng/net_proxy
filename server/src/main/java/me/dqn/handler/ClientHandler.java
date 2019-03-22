@@ -49,7 +49,6 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-//        logger.info("读取完成");
         ctx.flush();
     }
 
@@ -87,16 +86,12 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         if (transData.getData() != null) {
             logger.info("client data: {}", new String(transData.getData()));
         }
-        // TODO: 2019/3/22 转发数据
-        Channel channel = ClientChannelManager.getChannel(transData.getToPort() + ":" + transData.getFromPort());
-        byte[] data = ("from server: " + new Date().toString()).getBytes();
-        channel.pipeline().write(new TransData.Builder()
-                .toPort(transData.getToPort())
-                .fromPort(transData.getFromPort())
-                .type(transData.getType())
-                .dataSize(data.length)
-                .data(data)
-                .build());
+        // TODO: 2019/3/22 转发数据(向用户）
+        // 先拿到Outer channel
+        Channel channel = OuterChannelManager.outerSession.get(transData.getSess());
+        if (channel != null && channel.isActive()) {
+            logger.info("转发数据(向用户），{}", transData.getSess());
+        }
     }
 
 
@@ -104,6 +99,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
      * 打开真实端口（未打开的话）
      */
     private void openOuterPort(Integer port) {
+        // TODO: 2019/3/22  client 断开连接，这个要关了相应端口
         if (!OuterChannelManager.exists(port)) {
             ServerBootstrap bootstrap = new ServerBootstrap();
             NioEventLoopGroup boss = new NioEventLoopGroup();
@@ -117,8 +113,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                                     .addLast(new OuterHandler());
                         }
                     }).bind(port);
+            OuterChannelManager.putChannel(port, future);
             logger.info("端口 {} 已打开, 对应内网端口：{}", port, ServerConfigManager.portMapping.get(port));
-
         }
     }
 }

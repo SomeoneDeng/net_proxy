@@ -14,6 +14,7 @@ public class ClientInfoEncoder extends MessageToByteEncoder<TransData> {
     protected void encode(ChannelHandlerContext ctx, TransData msg, ByteBuf out) throws Exception {
         if (msg == null) throw new NullPointerException("Encode出错ClientInfo为空");
         out.writeInt(msg.getType());
+        out.writeLong(msg.getSess());
         out.writeInt(msg.getFromPort());
         out.writeInt(msg.getToPort());
         out.writeInt(msg.getDataSize());
