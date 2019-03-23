@@ -1,6 +1,7 @@
 package me.dqn.handler;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -13,8 +14,6 @@ import me.dqn.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-
 /**
  * 注册client信息（获取channel）
  *
@@ -26,7 +25,6 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     /**
      * 从msg中获取响应的客户端信息，包括代理的端口等
-     * todo: 注册完成后，打开真实端口，可以接收用户请求。（创建outer channel）
      * todo: 注册完成后，加入心跳队伍
      * 注册channel
      *
@@ -43,7 +41,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
             registryClient(ctx, transData);
         } else if (transData.getType() == TransData.TYPE_DT) {
             // 处理数据
-            dispatchData(transData);
+            dispatchData(ctx, transData);
         }
     }
 
@@ -81,16 +79,16 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
      *
      * @param transData
      */
-    private void dispatchData(TransData transData) {
+    private void dispatchData(ChannelHandlerContext context, TransData transData) {
         logger.info("客户端数据处理");
-        if (transData.getData() != null) {
-            logger.info("client data: {}", new String(transData.getData()));
-        }
-        // TODO: 2019/3/22 转发数据(向用户）
+        logger.info("from  client sess: {}", transData.getSess());
         // 先拿到Outer channel
         Channel channel = OuterChannelManager.outerSession.get(transData.getSess());
         if (channel != null && channel.isActive()) {
-            logger.info("转发数据(向用户），{}", transData.getSess());
+            logger.info("转发数据(向用户），{}", channel.id());
+            ByteBuf resp = context.alloc().buffer(transData.getDataSize());
+            resp.writeBytes(transData.getData());
+            channel.writeAndFlush(resp);
         }
     }
 
@@ -109,8 +107,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
-                            ch.pipeline()
-                                    .addLast(new OuterHandler());
+                            ch.pipeline().addLast(new OuterHandler());
                         }
                     }).bind(port);
             OuterChannelManager.putChannel(port, future);

@@ -10,6 +10,7 @@ public class TransData implements Serializable {
     private static final long serialVersionUID = -8076742702215522708L;
     public static int TYPE_REG = 1;
     public static int TYPE_DT = 2;
+    public static int TYPE_HT = 3;
     // session id
     private long sess;
     private int fromPort;

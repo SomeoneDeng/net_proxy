@@ -9,8 +9,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import me.dqn.ServerApp;
 import me.dqn.channel.ClientChannelManager;
 import me.dqn.conf.ServerConfigManager;
-import me.dqn.ecoder.ClientInfoDecoder;
-import me.dqn.ecoder.ClientInfoEncoder;
+import me.dqn.ecoder.TransDataDecoder;
+import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.ClientHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,9 +57,15 @@ public class Server {
         registerBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
-                        ch.pipeline().addLast(new ClientInfoDecoder(1024 * 1024, 0, 4));
-                        ch.pipeline().addLast(new ClientInfoEncoder());
-                        ch.pipeline().addLast(new ClientHandler());
+                        ch.pipeline()
+                                .addLast(new TransDataEncoder())
+                                .addLast(new TransDataDecoder(
+                                        1024*1024,
+                                        20,
+                                        4,
+                                        0,
+                                        0))
+                                .addLast(new ClientHandler());
                     }
                 })
                 .bind(configManager.getRegisterPort())

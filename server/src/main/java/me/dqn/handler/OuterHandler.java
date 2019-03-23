@@ -1,12 +1,9 @@
 package me.dqn.handler;
 
-import cn.hutool.core.util.HexUtil;
-import cn.hutool.core.util.NumberUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.util.internal.MathUtil;
 import me.dqn.channel.ClientChannelManager;
 import me.dqn.channel.OuterChannelManager;
 import me.dqn.conf.ServerConfigManager;
@@ -49,22 +46,22 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         int port = ServerConfigManager.portMapping.get(address.getPort());
         // TODO: 2019/3/22 如果channel不存在
         Channel channel = ClientChannelManager.getChannel(address.getPort() + ":" + port);
-        while (readableBytes > BATCH_SIZE) {
-            byte[] buf = new byte[BATCH_SIZE];
-            byteBuf.readBytes(buf);
-            readableBytes = byteBuf.readableBytes();
-            channel.writeAndFlush(new TransData.Builder()
-                    .type(TransData.TYPE_DT)
-                    .fromPort(port)
-                    .sess(sessId)
-                    .toPort(address.getPort())
-                    .dataSize(BATCH_SIZE)
-                    .data(buf)
-                    .build());
-        }
-        readableBytes = byteBuf.readableBytes();
+//        while (readableBytes > BATCH_SIZE) {
+//            byte[] buf = new byte[BATCH_SIZE];
+//            byteBuf.readBytes(buf);
+//            readableBytes = byteBuf.readableBytes();
+//            channel.writeAndFlush(new TransData.Builder()
+//                    .type(TransData.TYPE_DT)
+//                    .fromPort(port)
+//                    .sess(sessId)
+//                    .toPort(address.getPort())
+//                    .dataSize(BATCH_SIZE)
+//                    .data(buf)
+//                    .build());
+//        }
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
+        logger.info("write to client,length:{}",readableBytes);
         channel.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
                 .sess(sessId)

@@ -4,9 +4,11 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import me.dqn.ecoder.ClientInfoDecoder;
-import me.dqn.ecoder.ClientInfoEncoder;
+import me.dqn.context.ClientManager;
+import me.dqn.ecoder.TransDataDecoder;
+import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.DataHandler;
+import me.dqn.handler.HeartHandler;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +23,8 @@ public class Client {
     private String HOST = "127.0.0.1";
     private Integer PORT = 9999;
     // 代理的端口，届时放在配置文件
-    private Integer fromPort = 3306;
-    private Integer toPort = 3307;
+    private Integer fromPort = 9001;
+    private Integer toPort = 9011;
 
     private Client() {
     }
@@ -52,8 +54,14 @@ public class Client {
                         public void initChannel(NioSocketChannel ch) {
                             ch.pipeline()
                                     // TODO: 2019/3/22 加入心跳handler
-                                    .addLast(new ClientInfoEncoder())
-                                    .addLast(new ClientInfoDecoder(1024 * 1024, 0, 4))
+                                    .addLast(new TransDataEncoder())
+                                    .addLast(new TransDataDecoder(
+                                            1024*1024,
+                                            20,
+                                            4,
+                                            0,
+                                            0))
+//                                    .addLast(new HeartHandler())
                                     .addLast(new DataHandler());
                         }
                     });
@@ -68,7 +76,7 @@ public class Client {
             });
             // 注册
             registerToServer(future);
-
+            ClientManager.getINSTANCE().setClientFuture(future);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -78,12 +86,13 @@ public class Client {
     }
 
     private void registerToServer(ChannelFuture future) {
-        TransData transData = new TransData();
-        transData.setType(1);
-        transData.setToPort(toPort);
-        transData.setFromPort(fromPort);
-        transData.setData(null);
-        transData.setSess(0);
-        future.channel().writeAndFlush(transData);
+        future.channel().writeAndFlush(new TransData.Builder()
+                .type(TransData.TYPE_REG)
+                .sess(0)
+                .fromPort(fromPort)
+                .toPort(toPort)
+                .dataSize(0)
+                .data(new byte[0])
+                .build());
     }
 }
