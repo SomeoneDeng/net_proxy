@@ -80,12 +80,10 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
      * @param transData
      */
     private void dispatchData(ChannelHandlerContext context, TransData transData) {
-        logger.info("客户端数据处理");
-        logger.info("from  client sess: {}", transData.getSess());
         // 先拿到Outer channel
         Channel channel = OuterChannelManager.outerSession.get(transData.getSess());
         if (channel != null && channel.isActive()) {
-            logger.info("转发数据(向用户），{}", channel.id());
+            logger.info("from client sess: {}，to user，{}",transData.getSess(), channel.id());
             ByteBuf resp = context.alloc().buffer(transData.getDataSize());
             resp.writeBytes(transData.getData());
             channel.writeAndFlush(resp);

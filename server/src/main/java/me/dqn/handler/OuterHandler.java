@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
  */
 public class OuterHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(OuterHandler.class);
-    private final int BATCH_SIZE = 1024;
+    private final int BATCH_SIZE = 256;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -46,22 +46,23 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         int port = ServerConfigManager.portMapping.get(address.getPort());
         // TODO: 2019/3/22 如果channel不存在
         Channel channel = ClientChannelManager.getChannel(address.getPort() + ":" + port);
-//        while (readableBytes > BATCH_SIZE) {
-//            byte[] buf = new byte[BATCH_SIZE];
-//            byteBuf.readBytes(buf);
-//            readableBytes = byteBuf.readableBytes();
-//            channel.writeAndFlush(new TransData.Builder()
-//                    .type(TransData.TYPE_DT)
-//                    .fromPort(port)
-//                    .sess(sessId)
-//                    .toPort(address.getPort())
-//                    .dataSize(BATCH_SIZE)
-//                    .data(buf)
-//                    .build());
-//        }
+        logger.info("readable size: {}", readableBytes);
+        while (byteBuf.readerIndex() + BATCH_SIZE < byteBuf.readableBytes()) {
+            byte[] buf = new byte[BATCH_SIZE];
+            byteBuf.readBytes(buf);
+            channel.writeAndFlush(new TransData.Builder()
+                    .type(TransData.TYPE_DT)
+                    .fromPort(port)
+                    .sess(sessId)
+                    .toPort(address.getPort())
+                    .dataSize(BATCH_SIZE)
+                    .data(buf)
+                    .build());
+        }
+        readableBytes = byteBuf.readableBytes();
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
-        logger.info("write to client,length:{}",readableBytes);
+        logger.info("write to client,length:{}, sess:{}", readableBytes,sessId);
         channel.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
                 .sess(sessId)

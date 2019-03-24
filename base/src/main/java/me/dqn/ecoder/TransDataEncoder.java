@@ -1,6 +1,7 @@
 package me.dqn.ecoder;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.UnpooledUnsafeDirectByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import me.dqn.protocol.TransData;
@@ -17,18 +18,12 @@ public class TransDataEncoder extends MessageToByteEncoder<TransData> {
     @Override
     protected void encode(ChannelHandlerContext ctx, TransData msg, ByteBuf out) throws Exception {
         if (msg == null) throw new NullPointerException("Encode出错ClientInfo为空");
-        if (msg.getType() == TransData.TYPE_DT) {
-            logger.info("size: {},data len: {}", msg.getDataSize(), msg.getData().length);
-        }
+        out.writeInt(msg.getDataSize());//5
         out.writeInt(msg.getType());//1
         out.writeLong(msg.getSess());//2
         out.writeInt(msg.getFromPort());//3
         out.writeInt(msg.getToPort());//4
-        out.writeInt(msg.getDataSize());//5
-        if (msg.getType() == TransData.TYPE_DT) {
-            ByteBuf byteBuf = ctx.alloc().directBuffer(msg.getDataSize());
-            byteBuf.writeBytes(msg.getData());
-            out.writeBytes(byteBuf);
-        }
+        out.writeBytes(msg.getData());
+        logger.info("write Index: {}", out.writerIndex());
     }
 }

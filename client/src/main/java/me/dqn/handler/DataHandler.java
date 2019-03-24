@@ -51,7 +51,8 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                     .handler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new ServerHandler());
+                            ch.pipeline()
+                                    .addLast(new ServerHandler());
                         }
                     }).connect(InetAddress.getLocalHost(), transData.getFromPort()).sync().channel();
             ClientManager.getINSTANCE().getServerMap().put(transData.getSess(), serverChan);

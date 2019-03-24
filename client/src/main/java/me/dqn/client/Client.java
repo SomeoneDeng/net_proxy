@@ -4,11 +4,12 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import me.dqn.context.ClientManager;
-import me.dqn.ecoder.TransDataDecoder;
+import me.dqn.ecoder.TDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.DataHandler;
-import me.dqn.handler.HeartHandler;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,19 +50,22 @@ public class Client {
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.SO_KEEPALIVE, true)
+                    .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(Integer.MAX_VALUE))
                     .handler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         public void initChannel(NioSocketChannel ch) {
                             ch.pipeline()
                                     // TODO: 2019/3/22 加入心跳handler
+                                    .addLast(new LengthFieldPrepender(4, false))
                                     .addLast(new TransDataEncoder())
-                                    .addLast(new TransDataDecoder(
-                                            1024*1024,
-                                            20,
-                                            4,
-                                            0,
-                                            0))
-//                                    .addLast(new HeartHandler())
+//                                    .addLast(new TransDataDecoder(
+//                                            Integer.MAX_VALUE,
+//                                            0,
+//                                            4,
+//                                            20,
+//                                            0))
+                                    .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
+                                    .addLast(new TDecoder())
                                     .addLast(new DataHandler());
                         }
                     });
@@ -86,13 +90,14 @@ public class Client {
     }
 
     private void registerToServer(ChannelFuture future) {
-        future.channel().writeAndFlush(new TransData.Builder()
-                .type(TransData.TYPE_REG)
-                .sess(0)
-                .fromPort(fromPort)
-                .toPort(toPort)
-                .dataSize(0)
-                .data(new byte[0])
-                .build());
+        future.channel()
+                .writeAndFlush(new TransData.Builder()
+                        .type(TransData.TYPE_REG)
+                        .sess(0)
+                        .fromPort(fromPort)
+                        .toPort(toPort)
+                        .dataSize(0)
+                        .data(new byte[0])
+                        .build());
     }
 }
