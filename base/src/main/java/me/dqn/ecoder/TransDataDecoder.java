@@ -11,7 +11,7 @@ import java.util.List;
  * @author dqn
  * created at 2019/3/24 18:39
  */
-public class TDecoder extends ByteToMessageDecoder {
+public class TransDataDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         if (in == null) return;

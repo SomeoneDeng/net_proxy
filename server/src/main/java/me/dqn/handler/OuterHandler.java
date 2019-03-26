@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
  */
 public class OuterHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(OuterHandler.class);
-    private final int BATCH_SIZE = 256;
+    private final int BATCH_SIZE = 1024*1024;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -35,10 +35,12 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("连接处理结束");
         OuterChannelManager.outerSession.remove(Long.valueOf(ctx.channel().id().asShortText(), 16));
+        // TODO: 2019/3/24 通知关闭真实channel
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        logger.info("reading...");
         InetSocketAddress address = (InetSocketAddress) ctx.channel().localAddress();
         ByteBuf byteBuf = (ByteBuf) msg;
         Long sessId = Long.valueOf(ctx.channel().id().asShortText(), 16);
@@ -47,19 +49,19 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         // TODO: 2019/3/22 如果channel不存在
         Channel channel = ClientChannelManager.getChannel(address.getPort() + ":" + port);
         logger.info("readable size: {}", readableBytes);
-        while (byteBuf.readerIndex() + BATCH_SIZE < byteBuf.readableBytes()) {
-            byte[] buf = new byte[BATCH_SIZE];
-            byteBuf.readBytes(buf);
-            channel.writeAndFlush(new TransData.Builder()
-                    .type(TransData.TYPE_DT)
-                    .fromPort(port)
-                    .sess(sessId)
-                    .toPort(address.getPort())
-                    .dataSize(BATCH_SIZE)
-                    .data(buf)
-                    .build());
-        }
-        readableBytes = byteBuf.readableBytes();
+//        while (byteBuf.readerIndex() + BATCH_SIZE < byteBuf.readableBytes()) {
+//            byte[] buf = new byte[BATCH_SIZE];
+//            byteBuf.readBytes(buf);
+//            channel.writeAndFlush(new TransData.Builder()
+//                    .type(TransData.TYPE_DT)
+//                    .fromPort(port)
+//                    .sess(sessId)
+//                    .toPort(address.getPort())
+//                    .dataSize(BATCH_SIZE)
+//                    .data(buf)
+//                    .build());
+//        }
+//        readableBytes = byteBuf.readableBytes();
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
         logger.info("write to client,length:{}, sess:{}", readableBytes,sessId);

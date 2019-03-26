@@ -16,6 +16,7 @@ public class OuterChannelManager {
     private static ConcurrentHashMap<Integer, ChannelFuture> outerFutures = new ConcurrentHashMap<>();
     // 每个外部链接都有，key是channel id，内部的client共用这个key
     public static ConcurrentHashMap<Long, Channel> outerSession = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<Channel,Long> outerSessionMap = new ConcurrentHashMap<>();
 
     public static ChannelFuture getChannel(Integer port) {
         return outerFutures.get(port);

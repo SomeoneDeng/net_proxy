@@ -7,7 +7,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import me.dqn.context.ClientManager;
-import me.dqn.ecoder.TDecoder;
+import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.DataHandler;
 import me.dqn.protocol.TransData;
@@ -24,8 +24,9 @@ public class Client {
     private String HOST = "127.0.0.1";
     private Integer PORT = 9999;
     // 代理的端口，届时放在配置文件
-    private Integer fromPort = 9001;
-    private Integer toPort = 9011;
+    private Integer fromPort = 3389;
+    private Integer toPort = 9833;
+
 
     private Client() {
     }
@@ -50,7 +51,7 @@ public class Client {
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.SO_KEEPALIVE, true)
-                    .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(Integer.MAX_VALUE))
+                    .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(65535))
                     .handler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         public void initChannel(NioSocketChannel ch) {
@@ -58,14 +59,8 @@ public class Client {
                                     // TODO: 2019/3/22 加入心跳handler
                                     .addLast(new LengthFieldPrepender(4, false))
                                     .addLast(new TransDataEncoder())
-//                                    .addLast(new TransDataDecoder(
-//                                            Integer.MAX_VALUE,
-//                                            0,
-//                                            4,
-//                                            20,
-//                                            0))
                                     .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
-                                    .addLast(new TDecoder())
+                                    .addLast(new TransDataDecoder())
                                     .addLast(new DataHandler());
                         }
                     });

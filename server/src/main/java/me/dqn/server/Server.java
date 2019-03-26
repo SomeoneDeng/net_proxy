@@ -10,7 +10,7 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import me.dqn.ServerApp;
 import me.dqn.channel.ClientChannelManager;
 import me.dqn.conf.ServerConfigManager;
-import me.dqn.ecoder.TDecoder;
+import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.ClientHandler;
 import org.slf4j.Logger;
@@ -56,20 +56,14 @@ public class Server {
         NioEventLoopGroup boss = new NioEventLoopGroup();
         NioEventLoopGroup worker = new NioEventLoopGroup();
         registerBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
-                .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(Integer.MAX_VALUE))
+                .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(65535))
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
                         ch.pipeline()
                                 .addLast(new LengthFieldPrepender(4, false))
                                 .addLast(new TransDataEncoder())
-//                                .addLast(new TransDataDecoder(
-//                                        Integer.MAX_VALUE,
-//                                        0,
-//                                        4,
-//                                        20,
-//                                        0))
                                 .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
-                                .addLast(new TDecoder())
+                                .addLast(new TransDataDecoder())
                                 .addLast(new ClientHandler());
                     }
                 })

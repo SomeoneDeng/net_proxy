@@ -12,3 +12,7 @@ clients:
     port: 9001
     realPort: 9011
     desc: blog web server
+  - type: tcp
+    port: 3389
+    realPort: 9833
+    desc: yuancheng

@@ -79,14 +79,14 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
      *
      * @param transData
      */
-    private void dispatchData(ChannelHandlerContext context, TransData transData) {
+    private void dispatchData(ChannelHandlerContext context, TransData transData) throws InterruptedException {
         // 先拿到Outer channel
         Channel channel = OuterChannelManager.outerSession.get(transData.getSess());
         if (channel != null && channel.isActive()) {
             logger.info("from client sess: {}，to user，{}",transData.getSess(), channel.id());
             ByteBuf resp = context.alloc().buffer(transData.getDataSize());
             resp.writeBytes(transData.getData());
-            channel.writeAndFlush(resp);
+            channel.writeAndFlush(resp).sync();
         }
     }
 
