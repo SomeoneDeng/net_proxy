@@ -8,12 +8,19 @@ import java.io.Serializable;
  */
 public class TransData implements Serializable {
     private static final long serialVersionUID = -8076742702215522708L;
-    public static int TYPE_REG = 1;
-    public static int TYPE_DT = 2;
-    public static int TYPE_HT = 3;
+    // 注册
+    public final static int TYPE_REG = 1;
+    // 数据
+    public final static int TYPE_DT = 2;
+    // 心跳
+    public final static int TYPE_HT = 3;
+    // 断开连接
+    public final static int TYPT_DIS = 4;
     // session id
     private long sess;
+    // 真实端口
     private int fromPort;
+    // 代理端口
     private int toPort;
     /**
      * info: 1, data: 2

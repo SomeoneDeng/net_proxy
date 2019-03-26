@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import me.dqn.client.Client;
 import me.dqn.context.ClientManager;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
@@ -21,23 +22,40 @@ import java.net.UnknownHostException;
  */
 public class DataHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(DataHandler.class);
+    Client thisClient;
+
+    public DataHandler(Client thisClient) {
+        this.thisClient = thisClient;
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        logger.info("reading..");
         if (msg == null) {
             throw new NullPointerException("未收到ClientInfo");
         }
         if (msg instanceof TransData) {
             TransData transData = (TransData) msg;
-            logger.info("sess id: {}", transData.getSess());
-            // 真实channel，没有就创建
-            Channel serverChan = ClientManager.getINSTANCE().getServerMap().get(transData.getSess());
-            serverChan = createChannelFuture(transData, serverChan);
-            ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
-            byteBuf.writeBytes(transData.getData());
-            serverChan.pipeline().writeAndFlush(byteBuf);
+            switch (transData.getType()) {
+                case TransData.TYPE_DT:
+                    handlerData(ctx, transData);
+                    break;
+                case TransData.TYPT_DIS:
+                    logger.info("关闭session：{}", transData.getSess());
+                    break;
+                default:
+                    break;
+            }
         }
+    }
+
+
+    private void handlerData(ChannelHandlerContext ctx, TransData transData) throws InterruptedException, UnknownHostException {
+        // 真实channel，没有就创建
+        Channel serverChan = ClientManager.getINSTANCE().getServerMap().get(transData.getSess());
+        serverChan = createChannelFuture(transData, serverChan);
+        ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
+        byteBuf.writeBytes(transData.getData());
+        serverChan.pipeline().writeAndFlush(byteBuf);
     }
 
     private Channel createChannelFuture(TransData transData, Channel serverChan) throws InterruptedException, UnknownHostException {
@@ -51,8 +69,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                     .handler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
-                            ch.pipeline()
-                                    .addLast(new ServerHandler());
+                            ch.pipeline().addLast(new ServerHandler());
                         }
                     }).connect(InetAddress.getLocalHost(), transData.getFromPort()).sync().channel();
             ClientManager.getINSTANCE().getServerMap().put(transData.getSess(), serverChan);

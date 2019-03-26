@@ -9,6 +9,8 @@ import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+
 /**
  * 接受真实服务器的数据
  *
@@ -17,8 +19,12 @@ import org.slf4j.LoggerFactory;
  */
 public class ServerHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(ServerHandler.class);
-    private final int BATCH_SIZE = 65535;
 
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        logger.info("断开连接,{}", ctx.channel().remoteAddress());
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws InterruptedException {
@@ -26,33 +32,16 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         ByteBuf data = (ByteBuf) msg;
         int readableBytes = data.readableBytes();
         Channel clientChan = ClientManager.getINSTANCE().getClientFuture().channel();
-//        while (data.readerIndex() + BATCH_SIZE < data.readableBytes()) {
-//            logger.info("write to sess: {},readable size: {}", sess, readableBytes);
-//            byte[] buf = new byte[BATCH_SIZE];
-//            data.readBytes(buf);
-//            logger.info("after read server: {}", data.readerIndex());
-//            clientChan.pipeline()
-//                    .writeAndFlush(new TransData.Builder()
-//                            .type(TransData.TYPE_DT)
-//                            .sess(sess)
-//                            .fromPort(1)
-//                            .toPort(1)
-//                            .dataSize(BATCH_SIZE)
-//                            .data(buf)
-//                            .build());
-//        }
-        logger.info("readable size: {},index:{}", readableBytes, data.readerIndex());
-//        readableBytes = data.readableBytes();
         byte[] bytes = new byte[readableBytes];
         data.readBytes(bytes);
         clientChan.flush();
         clientChan.writeAndFlush(new TransData.Builder()
-                        .type(TransData.TYPE_DT)
-                        .sess(sess)
-                        .fromPort(1)
-                        .toPort(1)
-                        .dataSize(bytes.length)
-                        .data(bytes)
-                        .build()).sync();
+                .type(TransData.TYPE_DT)
+                .sess(sess)
+                .fromPort(1)
+                .toPort(1)
+                .dataSize(bytes.length)
+                .data(bytes)
+                .build()).sync();
     }
 }

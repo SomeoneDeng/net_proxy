@@ -2,6 +2,7 @@ package me.dqn.context;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import me.dqn.client.Client;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,10 +18,21 @@ public class ClientManager {
     private ConcurrentHashMap<Channel, Long> serverSessMap;
     // 到服务端
     private ChannelFuture clientFuture = null;
+    private Client client;
+    private ClientConfigure clientConfigure;
 
     private ClientManager() {
         serverMap = new ConcurrentHashMap<>();
         serverSessMap = new ConcurrentHashMap<>();
+        clientConfigure = new ClientConfigure("client.yml");
+    }
+
+    /**
+     * 启动客户端
+     */
+    public void start() throws InterruptedException {
+        client = new Client(clientConfigure.getServerHost(), clientConfigure.getServerPort());
+        client.startRegister(clientConfigure.getClients());
     }
 
     public static ClientManager getINSTANCE() {
@@ -51,4 +63,11 @@ public class ClientManager {
         return serverSessMap;
     }
 
+    public ClientConfigure getClientConfigure() {
+        return clientConfigure;
+    }
+
+    public void setClientConfigure(ClientConfigure clientConfigure) {
+        this.clientConfigure = clientConfigure;
+    }
 }

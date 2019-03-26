@@ -6,7 +6,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import me.dqn.context.ClientManager;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.DataHandler;
@@ -14,35 +13,25 @@ import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * @author dqn
  * created at 2019/3/22 11:27
  */
 public class Client {
+    private String HOST;
+    private int PORT;
+    private ChannelFuture future;
+
+    public Client(String HOST, int PORT) {
+        this.HOST = HOST;
+        this.PORT = PORT;
+    }
+
     Logger logger = LoggerFactory.getLogger(Client.class);
-    private static volatile Client INSTANCE = null;
-    private String HOST = "127.0.0.1";
-    private Integer PORT = 9999;
-    // 代理的端口，届时放在配置文件
-    private Integer fromPort = 3389;
-    private Integer toPort = 9833;
 
-
-    private Client() {
-    }
-
-    public static Client getInstance() {
-        if (INSTANCE == null) {
-            synchronized (Client.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new Client();
-                }
-            }
-        }
-        return INSTANCE;
-    }
-
-    public void startRegister() {
+    public void startRegister(List<ClientMeta> clientMetas) {
         // Configure the client.
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -61,21 +50,21 @@ public class Client {
                                     .addLast(new TransDataEncoder())
                                     .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
                                     .addLast(new TransDataDecoder())
-                                    .addLast(new DataHandler());
+                                    .addLast(new DataHandler(Client.this));
                         }
                     });
 
-            ChannelFuture future = b.connect(HOST, PORT).sync();
+            future = b.connect(HOST, PORT).sync();
             future.addListener((ChannelFutureListener) future1 -> {
                 if (future1.isSuccess()) {
-                    logger.info("连接成功");
+                    logger.info("[{}]连接成功", HOST);
                 } else {
-                    logger.info("连接失败");
+                    logger.info("[{}]连接失败", HOST);
                 }
             });
             // 注册
-            registerToServer(future);
-            ClientManager.getINSTANCE().setClientFuture(future);
+            clientMetas.forEach(clientMeta -> registerToServer(clientMeta));
+            me.dqn.context.ClientManager.getINSTANCE().setClientFuture(future);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -84,13 +73,13 @@ public class Client {
         }
     }
 
-    private void registerToServer(ChannelFuture future) {
+    private void registerToServer(ClientMeta clientMeta) {
         future.channel()
                 .writeAndFlush(new TransData.Builder()
                         .type(TransData.TYPE_REG)
                         .sess(0)
-                        .fromPort(fromPort)
-                        .toPort(toPort)
+                        .fromPort(clientMeta.getFromPort())
+                        .toPort(clientMeta.getToPort())
                         .dataSize(0)
                         .data(new byte[0])
                         .build());

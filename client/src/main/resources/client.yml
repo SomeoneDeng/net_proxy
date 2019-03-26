@@ -1,0 +1,21 @@
+server:
+  host: localhost
+  port: 9999
+clients:
+  - client_name: client1
+    host: localhost
+    from_port: 9001
+    to_port: 9011
+    type: tcp
+
+  - client_name: client2
+    host: localhost
+    from_port: 3389
+    to_port: 9833
+    type: tcp
+
+  - client_name: client
+    host: localhost
+    from_port: 3306
+    to_port: 3307
+    type: tcp

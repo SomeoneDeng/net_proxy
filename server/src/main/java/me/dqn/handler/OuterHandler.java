@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
  */
 public class OuterHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(OuterHandler.class);
-    private final int BATCH_SIZE = 1024*1024;
+    private final int BATCH_SIZE = 1024 * 1024;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -34,8 +34,21 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("连接处理结束");
-        OuterChannelManager.outerSession.remove(Long.valueOf(ctx.channel().id().asShortText(), 16));
+        long sess = Long.valueOf(ctx.channel().id().asShortText(), 16);
+        OuterChannelManager.outerSession.remove(sess);
         // TODO: 2019/3/24 通知关闭真实channel
+        // 通知client关闭真实连接
+        InetSocketAddress address = (InetSocketAddress) ctx.channel().localAddress();
+        int port = ServerConfigManager.portMapping.get(address.getPort());
+        Channel clientChannel = ClientChannelManager.getChannel(address.getPort() + ":" + port);
+        clientChannel.writeAndFlush(new TransData.Builder()
+                .type(TransData.TYPT_DIS)
+                .sess(sess)
+                .fromPort(port)
+                .toPort(address.getPort())
+                .dataSize(0)
+                .data(new byte[0])
+                .build());
     }
 
     @Override
@@ -64,7 +77,7 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
 //        readableBytes = byteBuf.readableBytes();
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
-        logger.info("write to client,length:{}, sess:{}", readableBytes,sessId);
+        logger.info("write to client,length:{}, sess:{}", readableBytes, sessId);
         channel.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
                 .sess(sessId)
