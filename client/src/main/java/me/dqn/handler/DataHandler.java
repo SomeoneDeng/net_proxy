@@ -6,7 +6,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import me.dqn.client.Client;
-import me.dqn.context.ClientManager;
+import me.dqn.context.ClientContext;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +42,9 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                 case TransData.TYPT_DIS:
                     logger.info("关闭session：{}", transData.getSess());
                     break;
+                case TransData.TYPE_HT:
+                    logger.info("服务器心跳回执");
+                    break;
                 default:
                     break;
             }
@@ -51,7 +54,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
 
     private void handlerData(ChannelHandlerContext ctx, TransData transData) throws InterruptedException, UnknownHostException {
         // 真实channel，没有就创建
-        Channel serverChan = ClientManager.getINSTANCE().getServerMap().get(transData.getSess());
+        Channel serverChan = ClientContext.getINSTANCE().getServerMap().get(transData.getSess());
         serverChan = createChannelFuture(transData, serverChan);
         ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
         byteBuf.writeBytes(transData.getData());
@@ -72,8 +75,8 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                             ch.pipeline().addLast(new ServerHandler());
                         }
                     }).connect(InetAddress.getLocalHost(), transData.getFromPort()).sync().channel();
-            ClientManager.getINSTANCE().getServerMap().put(transData.getSess(), serverChan);
-            ClientManager.getINSTANCE().getServerSessMap().put(serverChan, transData.getSess());
+            ClientContext.getINSTANCE().getServerMap().put(transData.getSess(), serverChan);
+            ClientContext.getINSTANCE().getServerSessMap().put(serverChan, transData.getSess());
         }
         return serverChan;
     }

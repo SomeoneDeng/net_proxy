@@ -1,6 +1,6 @@
 package me.dqn;
 
-import me.dqn.context.ClientManager;
+import me.dqn.context.ClientContext;
 
 /**
  * @author dqn
@@ -9,7 +9,7 @@ import me.dqn.context.ClientManager;
 public class ClientApp {
     public static void main(String[] args) {
         try {
-            ClientManager.getINSTANCE().start();
+            ClientContext.getINSTANCE().start();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

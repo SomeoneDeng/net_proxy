@@ -6,14 +6,18 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.timeout.IdleStateHandler;
+import me.dqn.context.ClientContext;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
+import me.dqn.handler.ClientHeartBeatTrigger;
 import me.dqn.handler.DataHandler;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author dqn
@@ -45,11 +49,12 @@ public class Client {
                         @Override
                         public void initChannel(NioSocketChannel ch) {
                             ch.pipeline()
-                                    // TODO: 2019/3/22 加入心跳handler
+                                    .addLast(new IdleStateHandler(0, 4, 4, TimeUnit.SECONDS))
                                     .addLast(new LengthFieldPrepender(4, false))
                                     .addLast(new TransDataEncoder())
                                     .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
                                     .addLast(new TransDataDecoder())
+                                    .addLast(new ClientHeartBeatTrigger())
                                     .addLast(new DataHandler(Client.this));
                         }
                     });
@@ -64,7 +69,7 @@ public class Client {
             });
             // 注册
             clientMetas.forEach(clientMeta -> registerToServer(clientMeta));
-            me.dqn.context.ClientManager.getINSTANCE().setClientFuture(future);
+            ClientContext.getINSTANCE().setClientFuture(future);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();

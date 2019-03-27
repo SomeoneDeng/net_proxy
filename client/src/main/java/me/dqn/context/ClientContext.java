@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author dqn
  * created at 2019/3/23 16:27
  */
-public class ClientManager {
-    private volatile static ClientManager INSTANCE = null;
+public class ClientContext {
+    private volatile static ClientContext INSTANCE = null;
     // 根据sess 找到到真实channel
     private ConcurrentHashMap<Long, Channel> serverMap;
     // 根据真实channel找到sess
@@ -21,7 +21,7 @@ public class ClientManager {
     private Client client;
     private ClientConfigure clientConfigure;
 
-    private ClientManager() {
+    private ClientContext() {
         serverMap = new ConcurrentHashMap<>();
         serverSessMap = new ConcurrentHashMap<>();
         clientConfigure = new ClientConfigure("client.yml");
@@ -35,11 +35,11 @@ public class ClientManager {
         client.startRegister(clientConfigure.getClients());
     }
 
-    public static ClientManager getINSTANCE() {
+    public static ClientContext getINSTANCE() {
         if (INSTANCE == null) {
-            synchronized (ClientManager.class) {
+            synchronized (ClientContext.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = new ClientManager();
+                    INSTANCE = new ClientContext();
                 }
             }
         }

@@ -1,6 +1,8 @@
 package me.dqn.channel;
 
 import io.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * created at 2019/3/13 20:11
  */
 public class ClientChannelManager {
+    private static Logger logger = LoggerFactory.getLogger(ClientChannelManager.class);
+
     private static ConcurrentHashMap<String, Channel> channelMap = new ConcurrentHashMap<>(32);
 
     public static void put(String key, Channel channel) {
@@ -21,10 +25,14 @@ public class ClientChannelManager {
         return channelMap.get(key);
     }
 
-    public static void removeChannel(String key, Channel chan) {
+    public static void removeChannel(Channel chan) {
         // 关闭外部端口
-        OuterChannelManager.closeOuterPort(Integer.parseInt(key.split(":")[0]));
-        channelMap.remove(key, chan);
+        channelMap.forEach((k, v) -> {
+            if (chan == v) {
+                logger.info("由于client 【{}】断开，关闭Outer端口【{}】", chan.remoteAddress(), k.split(":")[0]);
+                OuterChannelManager.closeOuterPort(Integer.parseInt(k.split(":")[0]));
+            }
+        });
     }
 
     public static Integer size() {

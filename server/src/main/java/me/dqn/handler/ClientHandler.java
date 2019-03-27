@@ -43,6 +43,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
             // 处理数据
             dispatchData(ctx, transData);
         }
+//        ctx.fireChannelRead(msg);
     }
 
     @Override
@@ -52,10 +53,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        int realPort = Server.instance().channelIdToRealPort.get(ctx.channel().id());
-        logger.info("与客户端的连接断开，代理的端口为:{},被代理的端口为：{}", realPort, ServerConfigManager.portMapping.get(realPort));
-        ClientChannelManager.removeChannel(realPort + ":" + ServerConfigManager.portMapping.get(realPort), ctx.channel());
-        Server.instance().onlineCount();
+        logger.info("与客户端【{}】的连接断开", ctx.channel().remoteAddress());
+        ClientChannelManager.removeChannel(ctx.channel());
     }
 
     /**

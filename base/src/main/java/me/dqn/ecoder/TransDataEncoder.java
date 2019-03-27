@@ -24,6 +24,5 @@ public class TransDataEncoder extends MessageToByteEncoder<TransData> {
         out.writeInt(msg.getFromPort());//3
         out.writeInt(msg.getToPort());//4
         out.writeBytes(msg.getData());
-        logger.info("write Index: {}", out.writerIndex());
     }
 }

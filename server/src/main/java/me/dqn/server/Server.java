@@ -7,17 +7,21 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.timeout.IdleStateHandler;
 import me.dqn.ServerApp;
 import me.dqn.channel.ClientChannelManager;
 import me.dqn.conf.ServerConfigManager;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.ClientHandler;
+import me.dqn.handler.HeartBeatHandler;
+import me.dqn.handler.HeartTrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author dqn
@@ -60,10 +64,14 @@ public class Server {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
                         ch.pipeline()
+                                // 10秒内没`读`操作断开连接
+                                .addLast(new IdleStateHandler(10, 0, 0, TimeUnit.SECONDS))
+                                .addLast(new HeartTrigger())
                                 .addLast(new LengthFieldPrepender(4, false))
                                 .addLast(new TransDataEncoder())
                                 .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
                                 .addLast(new TransDataDecoder())
+                                .addLast(new HeartBeatHandler())
                                 .addLast(new ClientHandler());
                     }
                 })
