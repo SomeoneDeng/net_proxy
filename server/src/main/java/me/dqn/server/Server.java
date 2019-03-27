@@ -13,7 +13,8 @@ import me.dqn.channel.ClientChannelManager;
 import me.dqn.conf.ServerConfigManager;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
-import me.dqn.handler.ClientHandler;
+import me.dqn.handler.ClientDataHandler;
+import me.dqn.handler.ClientRegisterHandler;
 import me.dqn.handler.HeartBeatHandler;
 import me.dqn.handler.HeartTrigger;
 import org.slf4j.Logger;
@@ -72,7 +73,8 @@ public class Server {
                                 .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
                                 .addLast(new TransDataDecoder())
                                 .addLast(new HeartBeatHandler())
-                                .addLast(new ClientHandler());
+                                .addLast(new ClientRegisterHandler())
+                                .addLast(new ClientDataHandler());
                     }
                 })
                 .bind(configManager.getRegisterPort())

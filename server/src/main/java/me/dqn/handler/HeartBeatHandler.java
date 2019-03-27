@@ -2,6 +2,7 @@ package me.dqn.handler;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import me.dqn.channel.ClientChannelManager;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,5 +41,11 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("{} 心跳异常退出，{}", ctx.channel().remoteAddress(), cause);
         ctx.close();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("与客户端【{}】的连接断开", ctx.channel().remoteAddress());
+        ClientChannelManager.removeChannel(ctx.channel());
     }
 }

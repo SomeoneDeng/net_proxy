@@ -1,5 +1,6 @@
 server:
-  host: 173.82.115.208
+#  host: 173.82.115.208
+  host: localhost
   port: 9999
 clients:
   - client_name: client1
