@@ -6,6 +6,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import me.dqn.client.Client;
+import me.dqn.context.ClientConfigure;
 import me.dqn.context.ClientContext;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
@@ -74,7 +75,12 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                         protected void initChannel(NioSocketChannel ch) throws Exception {
                             ch.pipeline().addLast(new ServerHandler());
                         }
-                    }).connect(InetAddress.getLocalHost(), transData.getFromPort()).sync().channel();
+                    }).connect(thisClient.getClientMetas()
+                                    .stream().filter(clientMeta -> clientMeta.getFromPort() == transData.getFromPort())
+                                    .findFirst()
+                                    .get().getServiceHost(),
+                            transData.getFromPort())
+                    .sync().channel();
             ClientContext.getINSTANCE().getServerMap().put(transData.getSess(), serverChan);
             ClientContext.getINSTANCE().getServerSessMap().put(serverChan, transData.getSess());
         }

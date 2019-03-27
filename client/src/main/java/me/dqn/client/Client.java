@@ -27,6 +27,7 @@ public class Client {
     private String HOST;
     private int PORT;
     private ChannelFuture future;
+    private List<ClientMeta> clientMetas;
 
     public Client(String HOST, int PORT) {
         this.HOST = HOST;
@@ -36,6 +37,7 @@ public class Client {
     Logger logger = LoggerFactory.getLogger(Client.class);
 
     public void startRegister(List<ClientMeta> clientMetas) {
+        this.clientMetas = clientMetas;
         // Configure the client.
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -88,5 +90,9 @@ public class Client {
                         .dataSize(0)
                         .data(new byte[0])
                         .build());
+    }
+
+    public List<ClientMeta> getClientMetas() {
+        return clientMetas;
     }
 }
