@@ -36,7 +36,6 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         logger.info("连接处理结束");
         long sess = Long.valueOf(ctx.channel().id().asShortText(), 16);
         OuterChannelManager.outerSession.remove(sess);
-        // TODO: 2019/3/24 通知关闭真实channel
         // 通知client关闭真实连接
         InetSocketAddress address = (InetSocketAddress) ctx.channel().localAddress();
         int port = ServerConfigManager.portMapping.get(address.getPort());
@@ -53,28 +52,12 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        logger.info("reading...");
         InetSocketAddress address = (InetSocketAddress) ctx.channel().localAddress();
         ByteBuf byteBuf = (ByteBuf) msg;
         Long sessId = Long.valueOf(ctx.channel().id().asShortText(), 16);
         int readableBytes = byteBuf.readableBytes();
         int port = ServerConfigManager.portMapping.get(address.getPort());
-        // TODO: 2019/3/22 如果channel不存在
         Channel channel = ClientChannelManager.getChannel(address.getPort() + ":" + port);
-        logger.info("readable size: {}", readableBytes);
-//        while (byteBuf.readerIndex() + BATCH_SIZE < byteBuf.readableBytes()) {
-//            byte[] buf = new byte[BATCH_SIZE];
-//            byteBuf.readBytes(buf);
-//            channel.writeAndFlush(new TransData.Builder()
-//                    .type(TransData.TYPE_DT)
-//                    .fromPort(port)
-//                    .sess(sessId)
-//                    .toPort(address.getPort())
-//                    .dataSize(BATCH_SIZE)
-//                    .data(buf)
-//                    .build());
-//        }
-//        readableBytes = byteBuf.readableBytes();
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
         logger.info("write to client,length:{}, sess:{}", readableBytes, sessId);

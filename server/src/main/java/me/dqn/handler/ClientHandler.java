@@ -58,7 +58,6 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         Server.instance().onlineCount();
     }
 
-
     /**
      * 处理客户端注册
      *
@@ -94,7 +93,6 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
      * 打开真实端口（未打开的话）
      */
     private void openOuterPort(Integer port) {
-        // TODO: 2019/3/22  client 断开连接，这个要关了相应端口
         if (!OuterChannelManager.exists(port)) {
             ServerBootstrap bootstrap = new ServerBootstrap();
             NioEventLoopGroup boss = new NioEventLoopGroup();

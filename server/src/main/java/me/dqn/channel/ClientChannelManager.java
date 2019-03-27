@@ -22,6 +22,8 @@ public class ClientChannelManager {
     }
 
     public static void removeChannel(String key, Channel chan) {
+        // 关闭外部端口
+        OuterChannelManager.closeOuterPort(Integer.parseInt(key.split(":")[0]));
         channelMap.remove(key, chan);
     }
 
