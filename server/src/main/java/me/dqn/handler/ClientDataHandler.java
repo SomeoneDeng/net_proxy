@@ -35,7 +35,10 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
             dispatchData(ctx, transData);
         } else if (transData.getType() == TransData.TYPT_DIS) {
             logger.info("client请求关闭外部连接");
-            OuterChannelManager.outerSession.get(transData.getSess()).close();
+            Channel channel = OuterChannelManager.outerSession.get(transData.getSess());
+            if (channel != null) {
+                channel.close();
+            }
         }
         ctx.fireChannelRead(msg);
     }

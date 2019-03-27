@@ -22,6 +22,14 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         logger.info("断开连接,{}", ctx.channel().remoteAddress());
+        Long sess = ClientContext.getINSTANCE().getServerSessMap().get(ctx.channel());
+        Channel clientChan = ClientContext.getINSTANCE().getClientFuture().channel();
+        clientChan.writeAndFlush(new TransData.Builder()
+                .type(TransData.TYPT_DIS)
+                .sess(sess)
+                .dataSize(0)
+                .data(new byte[0])
+                .build());
     }
 
     @Override
@@ -32,6 +40,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         Channel clientChan = ClientContext.getINSTANCE().getClientFuture().channel();
         byte[] bytes = new byte[readableBytes];
         data.readBytes(bytes);
+        data.release();
         clientChan.flush();
         clientChan.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
@@ -40,6 +49,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 .toPort(1)
                 .dataSize(bytes.length)
                 .data(bytes)
-                .build()).sync();
+                .build());
     }
 }

@@ -60,6 +60,7 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         Channel channel = ClientChannelManager.getChannel(address.getPort() + ":" + port);
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
+        byteBuf.release();
         logger.info("write to client,length:{}, sess:{}", readableBytes, sessId);
         channel.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
@@ -68,6 +69,6 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
                 .toPort(address.getPort())
                 .dataSize(readableBytes)
                 .data(data)
-                .build());
+                .build()).sync();
     }
 }
