@@ -2,8 +2,8 @@ registerPort: 9999
 heartbeat_time: 15
 clients:
   - type: tcp
-    port: 3306
-    realPort: 3307
+    port: 9090
+    realPort: 9900
     desc: mysql server
   - type: tcp
     port: 8080

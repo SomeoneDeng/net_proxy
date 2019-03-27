@@ -53,16 +53,27 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
     }
 
 
-    private void handlerData(ChannelHandlerContext ctx, TransData transData) throws InterruptedException, UnknownHostException {
+    private void handlerData(ChannelHandlerContext ctx, TransData transData) {
         // 真实channel，没有就创建
         Channel serverChan = ClientContext.getINSTANCE().getServerMap().get(transData.getSess());
-        serverChan = createChannelFuture(transData, serverChan);
-        ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
-        byteBuf.writeBytes(transData.getData());
-        serverChan.pipeline().writeAndFlush(byteBuf);
+        // 创建连接可能出错
+        try {
+            serverChan = createChannelFuture(ctx, transData, serverChan);
+            ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
+            byteBuf.writeBytes(transData.getData());
+            serverChan.pipeline().writeAndFlush(byteBuf);
+        }catch (Exception e){
+            logger.info("连接真实服务器失败,断开外部连接");
+            ctx.channel().writeAndFlush(new TransData.Builder()
+                    .type(TransData.TYPT_DIS)
+                    .sess(transData.getSess())
+                    .dataSize(0)
+                    .data(new byte[0])
+                    .build());
+        }
     }
 
-    private Channel createChannelFuture(TransData transData, Channel serverChan) throws InterruptedException, UnknownHostException {
+    private Channel createChannelFuture(ChannelHandlerContext ctx, TransData transData, Channel serverChan) throws InterruptedException {
         if (serverChan == null) {
             logger.info("创建到真实服务的连接,port:{}", transData.getFromPort());
             Bootstrap bootstrap = new Bootstrap();
@@ -72,7 +83,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .handler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
-                        protected void initChannel(NioSocketChannel ch) throws Exception {
+                        protected void initChannel(NioSocketChannel ch) {
                             ch.pipeline().addLast(new ServerHandler());
                         }
                     }).connect(thisClient.getClientMetas()
