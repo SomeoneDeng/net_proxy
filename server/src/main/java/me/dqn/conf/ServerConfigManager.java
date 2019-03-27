@@ -24,9 +24,11 @@ public class ServerConfigManager {
     public static Map<Integer, Integer> portMapping;
 
     /**
-     * 配置信息
+     * 注册端口
      */
     private Integer registerPort;
+
+    private Integer heartBeatTime;
 
     public ServerConfigManager(String configPath) {
         this.configPath = configPath;
@@ -42,6 +44,7 @@ public class ServerConfigManager {
         Yaml yaml = new Yaml();
         LinkedHashMap map = yaml.load(this.getClass().getClassLoader().getResourceAsStream(configPath));
         registerPort = (Integer) map.get("registerPort");
+        heartBeatTime = (Integer) map.get("heartbeat_time");
         List<LinkedHashMap<String, Object>> clients = (List<LinkedHashMap<String, Object>>) map.get("clients");
         clients.forEach(client -> {
             logger.info("客户端：{}", client);
@@ -57,4 +60,7 @@ public class ServerConfigManager {
         return registerPort;
     }
 
+    public Integer getHeartBeatTime() {
+        return heartBeatTime;
+    }
 }

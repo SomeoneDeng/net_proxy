@@ -66,7 +66,7 @@ public class Server {
                     protected void initChannel(NioSocketChannel ch) {
                         ch.pipeline()
                                 // 10秒内没`读`操作断开连接
-                                .addLast(new IdleStateHandler(10, 0, 0, TimeUnit.SECONDS))
+                                .addLast(new IdleStateHandler(configManager.getHeartBeatTime(), 0, 0, TimeUnit.SECONDS))
                                 .addLast(new HeartTrigger())
                                 .addLast(new LengthFieldPrepender(4, false))
                                 .addLast(new TransDataEncoder())

@@ -32,7 +32,7 @@ public class ClientContext {
      */
     public void start() throws InterruptedException {
         client = new Client(clientConfigure.getServerHost(), clientConfigure.getServerPort());
-        client.startRegister(clientConfigure.getClients());
+        client.startRegister(clientConfigure);
     }
 
     public static ClientContext getINSTANCE() {

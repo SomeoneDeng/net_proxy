@@ -2,6 +2,7 @@ server:
 #  host: 173.82.115.208
   host: localhost
   port: 9999
+  heartbeat_time: 10
 clients:
   - client_name: client1
     host: 192.168.31.105

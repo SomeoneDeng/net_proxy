@@ -20,6 +20,7 @@ public class ClientConfigure {
     private List<ClientMeta> clients;
     private String serverHost;
     private int serverPort;
+    private int heartbeatTime;
 
     public List<ClientMeta> getClients() {
         return clients;
@@ -40,6 +41,7 @@ public class ClientConfigure {
         Map<String, Object> server = (Map<String, Object>) configs.get("server");
         serverHost = (String) server.get("host");
         serverPort = (int) server.get("port");
+        heartbeatTime = (int) server.get("heartbeat_time");
         List<Map<String, Object>> clientConfigs = (List<Map<String, Object>>) configs.get("clients");
 
         this.clients = new LinkedList<>();
@@ -73,5 +75,9 @@ public class ClientConfigure {
 
     public ClientConfigure(String configFilePath) {
         loadConfigFile(configFilePath);
+    }
+
+    public int getHeartbeatTime() {
+        return heartbeatTime;
     }
 }

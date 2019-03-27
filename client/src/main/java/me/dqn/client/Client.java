@@ -7,6 +7,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
+import me.dqn.context.ClientConfigure;
 import me.dqn.context.ClientContext;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
@@ -36,8 +37,8 @@ public class Client {
 
     Logger logger = LoggerFactory.getLogger(Client.class);
 
-    public void startRegister(List<ClientMeta> clientMetas) {
-        this.clientMetas = clientMetas;
+    public void startRegister(ClientConfigure clientConfigure) {
+        this.clientMetas = clientConfigure.getClients();
         // Configure the client.
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -51,7 +52,7 @@ public class Client {
                         @Override
                         public void initChannel(NioSocketChannel ch) {
                             ch.pipeline()
-                                    .addLast(new IdleStateHandler(0, 4, 4, TimeUnit.SECONDS))
+                                    .addLast(new IdleStateHandler(0, clientConfigure.getHeartbeatTime(), 0, TimeUnit.SECONDS))
                                     .addLast(new LengthFieldPrepender(4, false))
                                     .addLast(new TransDataEncoder())
                                     .addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
@@ -70,13 +71,20 @@ public class Client {
                 }
             });
             // 注册
-            clientMetas.forEach(clientMeta -> registerToServer(clientMeta));
+            clientMetas.forEach(this::registerToServer);
             ClientContext.getINSTANCE().setClientFuture(future);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            group.shutdownGracefully();
+            if (null != future) {
+                if (future.channel() != null && future.channel().isOpen()) {
+                    future.channel().close();
+                }
+            }
+            logger.info("与服务器连接断开，准备重连");
+            startRegister(clientConfigure);
+            logger.info("重连成功");
         }
     }
 

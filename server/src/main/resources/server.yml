@@ -1,4 +1,5 @@
 registerPort: 9999
+heartbeat_time: 15
 clients:
   - type: tcp
     port: 3306

@@ -21,7 +21,7 @@ public class ClientHeartBeatTrigger extends ChannelInboundHandlerAdapter {
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
             if (((IdleStateEvent) evt).state() == IdleState.WRITER_IDLE) {
-                logger.info("太久没写，发个心跳包告诉服务器自己没死。。");
+                logger.info("发个心跳包告诉服务器自己没死。。");
                 ctx.writeAndFlush(new TransData.Builder()
                         .type(TransData.TYPE_HT)
                         .dataSize(0)
