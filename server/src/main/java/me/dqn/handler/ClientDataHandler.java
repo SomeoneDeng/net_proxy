@@ -1,10 +1,11 @@
 package me.dqn.handler;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
-import me.dqn.channel.ClientChannelManager;
-import me.dqn.channel.OuterChannelManager;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import me.dqn.protocol.TransData;
+import me.dqn.server.channel.OuterChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

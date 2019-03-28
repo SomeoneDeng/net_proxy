@@ -6,14 +6,10 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import me.dqn.client.Client;
-import me.dqn.context.ClientConfigure;
-import me.dqn.context.ClientContext;
+import me.dqn.client.ClientContext;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * 处理server过来的数据
@@ -62,7 +58,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
             ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
             byteBuf.writeBytes(transData.getData());
             serverChan.pipeline().writeAndFlush(byteBuf);
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.info("连接真实服务器失败,断开外部连接");
             ctx.channel().writeAndFlush(new TransData.Builder()
                     .type(TransData.TYPT_DIS)
@@ -86,7 +82,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                         protected void initChannel(NioSocketChannel ch) {
                             ch.pipeline().addLast(new ServerHandler());
                         }
-                    }).connect(thisClient.getClientMetas()
+                    }).connect(thisClient.getClientInfos()
                                     .stream().filter(clientMeta -> clientMeta.getFromPort() == transData.getFromPort())
                                     .findFirst()
                                     .get().getServiceHost(),

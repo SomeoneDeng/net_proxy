@@ -1,6 +1,6 @@
 package me.dqn;
 
-import me.dqn.context.ClientContext;
+import me.dqn.client.ClientContext;
 
 /**
  * @author dqn

@@ -8,11 +8,11 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import me.dqn.channel.ClientChannelManager;
-import me.dqn.channel.OuterChannelManager;
-import me.dqn.conf.ServerConfigManager;
 import me.dqn.protocol.TransData;
 import me.dqn.server.Server;
+import me.dqn.server.channel.ClientChannelManager;
+import me.dqn.server.channel.OuterChannelManager;
+import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
                         }
                     }).bind(port);
             OuterChannelManager.putChannel(port, future);
-            logger.info("端口 {} 已打开, 对应内网端口：{}", port, ServerConfigManager.portMapping.get(port));
+            logger.info("端口 {} 已打开, 对应内网端口：{}", port, ServerConfig.portMapping.get(port));
         }
     }
 }

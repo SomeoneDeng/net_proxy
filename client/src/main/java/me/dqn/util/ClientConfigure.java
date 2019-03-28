@@ -1,11 +1,12 @@
-package me.dqn.context;
+package me.dqn.util;
 
-import me.dqn.client.ClientMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -17,16 +18,16 @@ import java.util.stream.Collectors;
 public class ClientConfigure {
     Logger logger = LoggerFactory.getLogger(ClientConfigure.class);
 
-    private List<ClientMeta> clients;
+    private List<ClientInfo> clients;
     private String serverHost;
     private int serverPort;
     private int heartbeatTime;
 
-    public List<ClientMeta> getClients() {
+    public List<ClientInfo> getClients() {
         return clients;
     }
 
-    public void setClients(List<ClientMeta> clients) {
+    public void setClients(List<ClientInfo> clients) {
         this.clients = clients;
     }
 
@@ -51,7 +52,7 @@ public class ClientConfigure {
             String type = (String) map.get("type");
             int fromPort = (int) map.get("from_port");
             int toPort = (int) map.get("to_port");
-            return new ClientMeta(
+            return new ClientInfo(
                     name,
                     serverHost,
                     serverPort,

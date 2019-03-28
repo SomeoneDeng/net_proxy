@@ -1,7 +1,10 @@
 package me.dqn.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelId;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -9,14 +12,14 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
 import me.dqn.ServerApp;
-import me.dqn.channel.ClientChannelManager;
-import me.dqn.conf.ServerConfigManager;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.ClientDataHandler;
 import me.dqn.handler.ClientRegisterHandler;
 import me.dqn.handler.HeartBeatHandler;
 import me.dqn.handler.HeartTrigger;
+import me.dqn.server.channel.ClientChannelManager;
+import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +35,7 @@ public class Server {
 
     private volatile static Server INSTANCE = null;
 
-    private ServerConfigManager configManager;
+    private ServerConfig configManager;
     private ServerBootstrap registerBootstrap;
     private ServerBootstrap OuterBootstrap;
     static Logger logger = LoggerFactory.getLogger(ServerApp.class);
@@ -47,7 +50,7 @@ public class Server {
      * load config from .yml file
      */
     private void initConfig() {
-        configManager = new ServerConfigManager("server.yml");
+        configManager = new ServerConfig("server.yml");
     }
 
     /**

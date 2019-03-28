@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import me.dqn.context.ClientContext;
+import me.dqn.client.ClientContext;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         Long sess = ClientContext.getINSTANCE().getServerSessMap().get(ctx.channel());
         ByteBuf data = (ByteBuf) msg;
         int readableBytes = data.readableBytes();
-        logger.info("readable: {}",readableBytes);
+        logger.info("readable: {}", readableBytes);
         Channel clientChan = ClientContext.getINSTANCE().getClientFuture().channel();
         byte[] bytes = new byte[readableBytes];
         data.readBytes(bytes);

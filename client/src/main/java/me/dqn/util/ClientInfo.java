@@ -1,10 +1,10 @@
-package me.dqn.client;
+package me.dqn.util;
 
 /**
  * @author dqn
  * created at 2019/3/27 1:52
  */
-public class ClientMeta {
+public class ClientInfo {
     private String clientName;
     private String HOST;
     private int PORT;
@@ -14,8 +14,9 @@ public class ClientMeta {
     private Integer toPort;
     // tcp/http..
     private String type;
-    public ClientMeta(String clientName, String HOST, int PORT, String serviceHost,
-                  Integer fromPort, Integer toPort, String type) {
+
+    public ClientInfo(String clientName, String HOST, int PORT, String serviceHost,
+                      Integer fromPort, Integer toPort, String type) {
         this.clientName = clientName;
         this.HOST = HOST;
         this.PORT = PORT;

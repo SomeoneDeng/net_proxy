@@ -7,13 +7,13 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
-import me.dqn.context.ClientConfigure;
-import me.dqn.context.ClientContext;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.ClientHeartBeatTrigger;
 import me.dqn.handler.DataHandler;
 import me.dqn.protocol.TransData;
+import me.dqn.util.ClientConfigure;
+import me.dqn.util.ClientInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ public class Client {
     private String HOST;
     private int PORT;
     private ChannelFuture future;
-    private List<ClientMeta> clientMetas;
+    private List<ClientInfo> clientInfos;
 
     public Client(String HOST, int PORT) {
         this.HOST = HOST;
@@ -38,7 +38,7 @@ public class Client {
     Logger logger = LoggerFactory.getLogger(Client.class);
 
     public void startRegister(ClientConfigure clientConfigure) {
-        this.clientMetas = clientConfigure.getClients();
+        this.clientInfos = clientConfigure.getClients();
         // Configure the client.
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -71,7 +71,7 @@ public class Client {
                 }
             });
             // 注册
-            clientMetas.forEach(this::registerToServer);
+            clientInfos.forEach(this::registerToServer);
             ClientContext.getINSTANCE().setClientFuture(future);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {
@@ -88,19 +88,19 @@ public class Client {
         }
     }
 
-    private void registerToServer(ClientMeta clientMeta) {
+    private void registerToServer(ClientInfo clientInfo) {
         future.channel()
                 .writeAndFlush(new TransData.Builder()
                         .type(TransData.TYPE_REG)
                         .sess(0)
-                        .fromPort(clientMeta.getFromPort())
-                        .toPort(clientMeta.getToPort())
+                        .fromPort(clientInfo.getFromPort())
+                        .toPort(clientInfo.getToPort())
                         .dataSize(0)
                         .data(new byte[0])
                         .build());
     }
 
-    public List<ClientMeta> getClientMetas() {
-        return clientMetas;
+    public List<ClientInfo> getClientInfos() {
+        return clientInfos;
     }
 }
