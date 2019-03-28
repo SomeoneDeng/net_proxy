@@ -37,6 +37,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         Long sess = ClientContext.getINSTANCE().getServerSessMap().get(ctx.channel());
         ByteBuf data = (ByteBuf) msg;
         int readableBytes = data.readableBytes();
+        logger.info("readable: {}",readableBytes);
         Channel clientChan = ClientContext.getINSTANCE().getClientFuture().channel();
         byte[] bytes = new byte[readableBytes];
         data.readBytes(bytes);
