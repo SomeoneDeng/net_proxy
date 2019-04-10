@@ -56,7 +56,8 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
     }
 
 
-    private void handlerData(ChannelHandlerContext ctx, TransData transData) {
+    private void handlerData(ChannelHandlerContext ctx, TransData transData) throws InterruptedException {
+        logger.info("收到：{}",transData.getDataSize());
         // 真实channel，没有就创建
         Channel serverChan = ClientContext.getINSTANCE().getServerMap().get(transData.getSess());
         // 创建连接可能出错
@@ -64,7 +65,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
             serverChan = createChannelFuture(ctx, transData, serverChan);
             ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
             byteBuf.writeBytes(transData.getData());
-            serverChan.pipeline().writeAndFlush(byteBuf);
+            serverChan.pipeline().writeAndFlush(byteBuf.duplicate()).sync();
         } catch (Exception e) {
             logger.info("连接真实服务器失败,断开外部连接");
             ctx.channel().writeAndFlush(new TransData.Builder()
@@ -72,7 +73,7 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                     .sess(transData.getSess())
                     .dataSize(0)
                     .data(new byte[0])
-                    .build());
+                    .build()).sync();
         }
     }
 
@@ -91,5 +92,12 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
             ClientContext.getINSTANCE().getServerSessMap().put(serverChan, transData.getSess());
         }
         return serverChan;
+    }
+
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("与服务器连接断开");
+        throw new RuntimeException("与服务器连接断开");
     }
 }

@@ -50,6 +50,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 .toPort(1)
                 .dataSize(bytes.length)
                 .data(bytes)
-                .build()).sync();
+                .build());
     }
 }
