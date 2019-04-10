@@ -30,6 +30,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 .dataSize(0)
                 .data(new byte[0])
                 .build());
+        ctx.channel().close();
     }
 
     @Override

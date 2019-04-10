@@ -11,6 +11,7 @@ import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
 import me.dqn.handler.ClientHeartBeatTrigger;
 import me.dqn.handler.DataHandler;
+import me.dqn.handler.ServerHandler;
 import me.dqn.protocol.TransData;
 import me.dqn.util.ClientConfigure;
 import me.dqn.util.ClientInfo;
@@ -30,9 +31,21 @@ public class Client {
     private ChannelFuture future;
     private List<ClientInfo> clientInfos;
 
+    public Bootstrap clientBootStrap;
+
     public Client(String HOST, int PORT) {
         this.HOST = HOST;
         this.PORT = PORT;
+
+        clientBootStrap = new Bootstrap();
+        clientBootStrap.group(new NioEventLoopGroup())
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    public void initChannel(NioSocketChannel ch) {
+                        ch.pipeline().addLast(new ServerHandler());
+                    }
+                });
     }
 
     Logger logger = LoggerFactory.getLogger(Client.class);

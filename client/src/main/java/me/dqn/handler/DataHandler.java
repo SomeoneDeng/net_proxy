@@ -1,10 +1,9 @@
 package me.dqn.handler;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import me.dqn.client.Client;
 import me.dqn.client.ClientContext;
 import me.dqn.protocol.TransData;
@@ -37,7 +36,10 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                     handlerData(ctx, transData);
                     break;
                 case TransData.TYPT_DIS:
+                    // TODO: 2019/4/10  关闭session
                     logger.info("关闭session：{}", transData.getSess());
+                    ClientContext.getINSTANCE().getServerMap().get(transData.getSess()).close();
+                    ClientContext.getINSTANCE().getServerMap().remove(transData.getSess());
                     break;
                 case TransData.TYPE_HT:
                     logger.info("服务器心跳回执");
@@ -72,17 +74,9 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
     private Channel createChannelFuture(ChannelHandlerContext ctx, TransData transData, Channel serverChan) throws InterruptedException {
         if (serverChan == null) {
             logger.info("创建到真实服务的连接,port:{}", transData.getFromPort());
-            Bootstrap bootstrap = new Bootstrap();
-            serverChan = bootstrap.group(new NioEventLoopGroup())
-                    .channel(NioSocketChannel.class)
-                    .option(ChannelOption.TCP_NODELAY, true)
-                    .option(ChannelOption.SO_KEEPALIVE, true)
-                    .handler(new ChannelInitializer<NioSocketChannel>() {
-                        @Override
-                        protected void initChannel(NioSocketChannel ch) {
-                            ch.pipeline().addLast(new ServerHandler());
-                        }
-                    }).connect(thisClient.getClientInfos()
+            serverChan = thisClient
+                    .clientBootStrap
+                    .connect(thisClient.getClientInfos()
                                     .stream().filter(clientMeta -> clientMeta.getFromPort() == transData.getFromPort())
                                     .findFirst()
                                     .get().getServiceHost(),
