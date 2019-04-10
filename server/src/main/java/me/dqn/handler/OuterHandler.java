@@ -69,7 +69,7 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
                 .toPort(address.getPort())
                 .dataSize(readableBytes)
                 .data(data)
-                .build()).sync();
+                .build());
     }
 
     @Override

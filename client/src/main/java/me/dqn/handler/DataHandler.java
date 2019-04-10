@@ -38,7 +38,12 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                 case TransData.TYPT_DIS:
                     // TODO: 2019/4/10  关闭session
                     logger.info("关闭session：{}", transData.getSess());
-                    ClientContext.getINSTANCE().getServerMap().get(transData.getSess()).close();
+
+                    Channel channel = ClientContext.getINSTANCE().getServerMap().get(transData.getSess());
+                    if (channel != null) {
+                        logger.info("关闭前有{} bytes未发送", channel.bytesBeforeUnwritable());
+                        channel.close();
+                    }
                     ClientContext.getINSTANCE().getServerMap().remove(transData.getSess());
                     break;
                 case TransData.TYPE_HT:

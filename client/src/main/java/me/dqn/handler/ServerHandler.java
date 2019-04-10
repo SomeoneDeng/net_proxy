@@ -43,7 +43,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         byte[] bytes = new byte[readableBytes];
         data.readBytes(bytes);
         data.release();
-        clientChan.flush();
         clientChan.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
                 .sess(sess)
@@ -51,6 +50,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 .toPort(1)
                 .dataSize(bytes.length)
                 .data(bytes)
-                .build());
+                .build()).sync();
     }
 }

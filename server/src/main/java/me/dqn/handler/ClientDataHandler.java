@@ -20,7 +20,6 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
 
     /**
      * 从msg中获取响应的客户端信息，包括代理的端口等
-     * todo: 注册完成后，加入心跳队伍
      * 注册channel
      *
      * @param ctx
@@ -40,8 +39,9 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
             if (channel != null) {
                 channel.close();
             }
+        } else {
+            ctx.fireChannelRead(msg);
         }
-        ctx.fireChannelRead(msg);
     }
 
     /**
@@ -55,7 +55,8 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
         if (channel != null && channel.isActive()) {
             ByteBuf resp = context.alloc().buffer(transData.getDataSize());
             resp.writeBytes(transData.getData());
-            channel.writeAndFlush(resp).sync();
+            channel.writeAndFlush(resp.duplicate());
+            logger.info("分发到outer client：{}",transData.getDataSize());
         }
     }
 
