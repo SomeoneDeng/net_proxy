@@ -1,7 +1,6 @@
 package me.dqn.ecoder;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.UnpooledUnsafeDirectByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import me.dqn.protocol.TransData;

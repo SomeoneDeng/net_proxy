@@ -1,4 +1,4 @@
-package me.dqn.conf;
+package me.dqn.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author dqn
  * created at 2019/3/14 1:09
  */
-public class ServerConfigManager {
-    private Logger logger = LoggerFactory.getLogger(ServerConfigManager.class);
+public class ServerConfig {
+    private Logger logger = LoggerFactory.getLogger(ServerConfig.class);
 
     private String configPath;
     /**
@@ -30,7 +30,7 @@ public class ServerConfigManager {
 
     private Integer heartBeatTime;
 
-    public ServerConfigManager(String configPath) {
+    public ServerConfig(String configPath) {
         this.configPath = configPath;
         portMapping = new ConcurrentHashMap<>(16);
         readConfigFile();

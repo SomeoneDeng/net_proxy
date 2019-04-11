@@ -1,19 +1,14 @@
 package me.dqn.handler;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import me.dqn.client.Client;
-import me.dqn.context.ClientConfigure;
-import me.dqn.context.ClientContext;
+import me.dqn.client.ClientContext;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * 处理server过来的数据
@@ -41,7 +36,15 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                     handlerData(ctx, transData);
                     break;
                 case TransData.TYPT_DIS:
+                    // TODO: 2019/4/10  关闭session
                     logger.info("关闭session：{}", transData.getSess());
+
+                    Channel channel = ClientContext.getINSTANCE().getServerMap().get(transData.getSess());
+                    if (channel != null) {
+                        logger.info("关闭前有{} bytes未发送", channel.bytesBeforeUnwritable());
+                        channel.close();
+                    }
+                    ClientContext.getINSTANCE().getServerMap().remove(transData.getSess());
                     break;
                 case TransData.TYPE_HT:
                     logger.info("服务器心跳回执");
@@ -53,29 +56,33 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
     }
 
 
-    private void handlerData(ChannelHandlerContext ctx, TransData transData) throws InterruptedException, UnknownHostException {
+    private void handlerData(ChannelHandlerContext ctx, TransData transData) throws InterruptedException {
+        logger.info("收到：{}",transData.getDataSize());
         // 真实channel，没有就创建
         Channel serverChan = ClientContext.getINSTANCE().getServerMap().get(transData.getSess());
-        serverChan = createChannelFuture(transData, serverChan);
-        ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
-        byteBuf.writeBytes(transData.getData());
-        serverChan.pipeline().writeAndFlush(byteBuf);
+        // 创建连接可能出错
+        try {
+            serverChan = createChannelFuture(ctx, transData, serverChan);
+            ByteBuf byteBuf = ctx.alloc().directBuffer(transData.getDataSize());
+            byteBuf.writeBytes(transData.getData());
+            serverChan.pipeline().writeAndFlush(byteBuf.duplicate()).sync();
+        } catch (Exception e) {
+            logger.info("连接真实服务器失败,断开外部连接");
+            ctx.channel().writeAndFlush(new TransData.Builder()
+                    .type(TransData.TYPT_DIS)
+                    .sess(transData.getSess())
+                    .dataSize(0)
+                    .data(new byte[0])
+                    .build()).sync();
+        }
     }
 
-    private Channel createChannelFuture(TransData transData, Channel serverChan) throws InterruptedException, UnknownHostException {
+    private Channel createChannelFuture(ChannelHandlerContext ctx, TransData transData, Channel serverChan) throws InterruptedException {
         if (serverChan == null) {
             logger.info("创建到真实服务的连接,port:{}", transData.getFromPort());
-            Bootstrap bootstrap = new Bootstrap();
-            serverChan = bootstrap.group(new NioEventLoopGroup())
-                    .channel(NioSocketChannel.class)
-                    .option(ChannelOption.TCP_NODELAY, true)
-                    .option(ChannelOption.SO_KEEPALIVE, true)
-                    .handler(new ChannelInitializer<NioSocketChannel>() {
-                        @Override
-                        protected void initChannel(NioSocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new ServerHandler());
-                        }
-                    }).connect(thisClient.getClientMetas()
+            serverChan = thisClient
+                    .clientBootStrap
+                    .connect(thisClient.getClientInfos()
                                     .stream().filter(clientMeta -> clientMeta.getFromPort() == transData.getFromPort())
                                     .findFirst()
                                     .get().getServiceHost(),
@@ -85,5 +92,12 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
             ClientContext.getINSTANCE().getServerSessMap().put(serverChan, transData.getSess());
         }
         return serverChan;
+    }
+
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("与服务器连接断开");
+        throw new RuntimeException("与服务器连接断开");
     }
 }

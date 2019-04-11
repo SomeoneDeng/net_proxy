@@ -1,4 +1,4 @@
-package me.dqn.channel;
+package me.dqn.server.channel;
 
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 存放channel
+ * 存放client channel
  *
  * @author dqn
  * created at 2019/3/13 20:11

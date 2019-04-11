@@ -1,8 +1,8 @@
-package me.dqn.context;
+package me.dqn.client;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import me.dqn.client.Client;
+import me.dqn.util.ClientConfigure;
 
 import java.util.concurrent.ConcurrentHashMap;
 

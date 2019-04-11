@@ -2,8 +2,8 @@ package me.dqn.handler;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import me.dqn.channel.ClientChannelManager;
 import me.dqn.protocol.TransData;
+import me.dqn.server.channel.ClientChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

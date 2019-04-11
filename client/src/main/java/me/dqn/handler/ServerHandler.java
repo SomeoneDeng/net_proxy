@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import me.dqn.context.ClientContext;
+import me.dqn.client.ClientContext;
 import me.dqn.protocol.TransData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +22,15 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         logger.info("断开连接,{}", ctx.channel().remoteAddress());
+        Long sess = ClientContext.getINSTANCE().getServerSessMap().get(ctx.channel());
+        Channel clientChan = ClientContext.getINSTANCE().getClientFuture().channel();
+        clientChan.writeAndFlush(new TransData.Builder()
+                .type(TransData.TYPT_DIS)
+                .sess(sess)
+                .dataSize(0)
+                .data(new byte[0])
+                .build());
+        ctx.channel().close();
     }
 
     @Override
@@ -29,10 +38,11 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         Long sess = ClientContext.getINSTANCE().getServerSessMap().get(ctx.channel());
         ByteBuf data = (ByteBuf) msg;
         int readableBytes = data.readableBytes();
+        logger.info("readable: {}", readableBytes);
         Channel clientChan = ClientContext.getINSTANCE().getClientFuture().channel();
         byte[] bytes = new byte[readableBytes];
         data.readBytes(bytes);
-        clientChan.flush();
+        data.release();
         clientChan.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
                 .sess(sess)
@@ -40,6 +50,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 .toPort(1)
                 .dataSize(bytes.length)
                 .data(bytes)
-                .build()).sync();
+                .build());
     }
 }

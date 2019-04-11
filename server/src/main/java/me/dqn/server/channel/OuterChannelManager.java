@@ -1,4 +1,4 @@
-package me.dqn.channel;
+package me.dqn.server.channel;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -14,8 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OuterChannelManager {
     // 打开的端口
     private static ConcurrentHashMap<Integer, ChannelFuture> outerFutures = new ConcurrentHashMap<>();
-    // 每个外部链接都有，key是channel id，内部的client共用这个key
+    // 每个外部链接都有，key是channel id，内部的client共用这个key, id->channel
     public static ConcurrentHashMap<Long, Channel> outerSession = new ConcurrentHashMap<>();
+    // channel -> id
     public static ConcurrentHashMap<Channel, Long> outerSessionMap = new ConcurrentHashMap<>();
 
     public static ChannelFuture getChannel(Integer port) {
