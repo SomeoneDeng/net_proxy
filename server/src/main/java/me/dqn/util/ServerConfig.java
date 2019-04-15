@@ -27,7 +27,7 @@ public class ServerConfig {
      * 注册端口
      */
     private Integer registerPort;
-
+    private Integer statusPort;
     private Integer heartBeatTime;
 
     public ServerConfig(String configPath) {
@@ -44,6 +44,7 @@ public class ServerConfig {
         Yaml yaml = new Yaml();
         LinkedHashMap map = yaml.load(this.getClass().getClassLoader().getResourceAsStream(configPath));
         registerPort = (Integer) map.get("registerPort");
+        statusPort = (Integer) map.get("statusPort");
         heartBeatTime = (Integer) map.get("heartbeat_time");
         List<LinkedHashMap<String, Object>> clients = (List<LinkedHashMap<String, Object>>) map.get("clients");
         clients.forEach(client -> {
@@ -62,5 +63,9 @@ public class ServerConfig {
 
     public Integer getHeartBeatTime() {
         return heartBeatTime;
+    }
+
+    public Integer getStatusPort() {
+        return statusPort;
     }
 }
