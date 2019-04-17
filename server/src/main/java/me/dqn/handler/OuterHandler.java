@@ -27,13 +27,13 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // session
         Long channelSession = Long.valueOf(ctx.channel().id().asShortText(), 16);
-        logger.info("outer port: {}, sess:{}", ctx.channel().localAddress(), channelSession);
+//        logger.info("outer port: {}, sess:{}", ctx.channel().localAddress(), channelSession);
         OuterChannelManager.outerSession.put(channelSession, ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("连接处理结束");
+//        logger.info("连接处理结束");
         long sess = Long.valueOf(ctx.channel().id().asShortText(), 16);
         OuterChannelManager.outerSession.remove(sess);
         // 通知client关闭真实连接
@@ -61,7 +61,7 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
         byteBuf.release();
-        logger.info("write to client,length:{}, sess:{}", readableBytes, sessId);
+//        logger.info("write to client,length:{}, sess:{}", readableBytes, sessId);
         channel.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
                 .sess(sessId)
@@ -74,6 +74,6 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("连接出现异常，{}",cause.getMessage());
+//        logger.info("连接出现异常，{}",cause.getMessage());
     }
 }

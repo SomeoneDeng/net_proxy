@@ -1,7 +1,9 @@
 package me.dqn.handler;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import me.dqn.protocol.TransData;
 import me.dqn.server.channel.OuterChannelManager;
 import org.slf4j.Logger;
@@ -32,7 +34,7 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
             // 处理数据
             dispatchData(ctx, transData);
         } else if (transData.getType() == TransData.TYPT_DIS) {
-            logger.info("client请求关闭外部连接");
+//            logger.info("client请求关闭外部连接");
             Channel channel = OuterChannelManager.outerSession.get(transData.getSess());
             if (channel != null) {
                 channel.close();
@@ -54,7 +56,6 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
             ByteBuf resp = context.alloc().buffer(transData.getDataSize());
             resp.writeBytes(transData.getData());
             channel.writeAndFlush(resp.duplicate());
-            logger.info("分发到outer client：{}", transData.getDataSize());
         }
     }
 
