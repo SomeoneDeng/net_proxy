@@ -1,4 +1,5 @@
 registerPort: 9999
+statusPort: 9527
 heartbeat_time: 15
 clients:
   - type: tcp

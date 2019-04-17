@@ -11,6 +11,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.handler.traffic.GlobalChannelTrafficShapingHandler;
 import me.dqn.ServerApp;
 import me.dqn.ecoder.TransDataDecoder;
 import me.dqn.ecoder.TransDataEncoder;
@@ -19,10 +20,12 @@ import me.dqn.handler.ClientRegisterHandler;
 import me.dqn.handler.HeartBeatHandler;
 import me.dqn.handler.HeartTrigger;
 import me.dqn.server.channel.ClientChannelManager;
+import me.dqn.traffic.ClientTrafficCounter;
 import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -37,10 +40,24 @@ public class Server {
 
     private ServerConfig configManager;
     private ServerBootstrap registerBootstrap;
-    private ServerBootstrap OuterBootstrap;
+    private GlobalChannelTrafficShapingHandler trafficShapingHandler = null;
     static Logger logger = LoggerFactory.getLogger(ServerApp.class);
     // 存放client channel id 和 对应的端口号
     public Map<ChannelId, Integer> channelIdToRealPort;
+
+    // 读取的客户端数据量
+    public long lastReadBytes = 0;
+    public long lastWriteBytes = 0;
+    // 当前读取速度
+    public double readSpeedFromClient = 0;
+    public double writeSpeedToClient = 0;
+    // 外部读取速度(Outer 有多个)
+    public Map<Integer, Long> lastOuterRead = new HashMap<>();
+    public Map<Integer, Double> outerReadSpeed = new HashMap<>();
+    // 外部写入速度
+    public Map<Integer, Long> lastOuterWrite = new HashMap<>();
+    public Map<Integer, Double> outerWriteSpeed = new HashMap<>();
+
 
     private Server() {
         channelIdToRealPort = new ConcurrentHashMap<>();
@@ -68,6 +85,7 @@ public class Server {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
                         ch.pipeline()
+                                .addLast(trafficShapingHandler)
                                 // 10秒内没`读`操作断开连接
                                 .addLast(new IdleStateHandler(configManager.getHeartBeatTime(), 0, 0, TimeUnit.SECONDS))
                                 .addLast(new HeartTrigger())
@@ -79,13 +97,14 @@ public class Server {
                                 .addLast(new ClientRegisterHandler())
                                 .addLast(new ClientDataHandler());
                     }
-                })
-                .bind(configManager.getRegisterPort())
-                .sync();
+                });
+        trafficShapingHandler = new ClientTrafficCounter(registerBootstrap.config().childGroup(), 1000);
+        registerBootstrap.bind(configManager.getRegisterPort()).sync();
     }
 
     public void start() throws InterruptedException {
         initConfig();
+        new StatusServer(configManager);
         startRegister();
     }
 

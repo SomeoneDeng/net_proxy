@@ -8,10 +8,12 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.traffic.GlobalChannelTrafficShapingHandler;
 import me.dqn.protocol.TransData;
 import me.dqn.server.Server;
 import me.dqn.server.channel.ClientChannelManager;
 import me.dqn.server.channel.OuterChannelManager;
+import me.dqn.traffic.OuterTrafficCounter;
 import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,14 +49,18 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
             ServerBootstrap bootstrap = new ServerBootstrap();
             NioEventLoopGroup boss = new NioEventLoopGroup();
             NioEventLoopGroup worker = new NioEventLoopGroup();
-            ChannelFuture future = bootstrap.group(boss, worker)
-                    .channel(NioServerSocketChannel.class)
+            bootstrap.group(boss, worker);
+            GlobalChannelTrafficShapingHandler trafficShapingHandler =
+                    new OuterTrafficCounter(bootstrap.config().childGroup(), 5000, port);
+            ChannelFuture future = bootstrap.channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
+                            ch.pipeline().addLast(trafficShapingHandler);
                             ch.pipeline().addLast(new OuterHandler());
                         }
-                    }).bind(port);
+                    })
+                    .bind(port);
             OuterChannelManager.putChannel(port, future);
             logger.info("端口 {} 已打开, 对应内网端口：{}", port, ServerConfig.portMapping.get(port));
         }

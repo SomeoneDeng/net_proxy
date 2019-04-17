@@ -1,6 +1,6 @@
 server:
-  host: 173.82.115.208
-#  host: localhost
+#  host: 173.82.115.208
+  host: localhost
 #  host: 118.126.100.12
   port: 9999
   heartbeat_time: 10
