@@ -47,10 +47,10 @@ public class ServerConfig {
         statusPort = (Integer) map.get("statusPort");
         heartBeatTime = (Integer) map.get("heartbeat_time");
         List<LinkedHashMap<String, Object>> clients = (List<LinkedHashMap<String, Object>>) map.get("clients");
-        clients.forEach(client -> {
-            logger.info("客户端：{}", client);
-            portMapping.put((Integer) client.get("realPort"), (Integer) client.get("port"));
-        });
+//        clients.forEach(client -> {
+//            logger.info("客户端：{}", client);
+//            portMapping.put((Integer) client.get("realPort"), (Integer) client.get("port"));
+//        });
     }
 
     public void setRegisterPort(Integer registerPort) {

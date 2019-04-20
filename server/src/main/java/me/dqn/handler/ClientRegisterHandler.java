@@ -1,10 +1,7 @@
 package me.dqn.handler;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -33,6 +30,8 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
                 logger.info("处理客户端注册");
                 // 记录channel id
                 Server.instance().channelIdToRealPort.put(ctx.channel().id(), transData.getToPort());
+                // TODO: 2019/4/20 在这里往  portMapping 放东西就好了，服务端就不用配置了，客户端来多少开多少
+                ServerConfig.portMapping.put(transData.getToPort(), transData.getFromPort());
                 ClientChannelManager.put(transData.getToPort() + ":" + transData.getFromPort(), ctx.channel());
                 Server.instance().onlineCount();
                 openOuterPort(transData.getToPort());
@@ -52,7 +51,9 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
             bootstrap.group(boss, worker);
             GlobalChannelTrafficShapingHandler trafficShapingHandler =
                     new OuterTrafficCounter(bootstrap.config().childGroup(), 5000, port);
-            ChannelFuture future = bootstrap.channel(NioServerSocketChannel.class)
+            ChannelFuture future = bootstrap
+                    .channel(NioServerSocketChannel.class)
+                    .option(ChannelOption.SO_KEEPALIVE, true)
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
