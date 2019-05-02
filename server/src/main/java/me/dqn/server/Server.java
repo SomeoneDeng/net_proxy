@@ -1,10 +1,8 @@
 package me.dqn.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelId;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.FixedRecvByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -20,7 +18,6 @@ import me.dqn.handler.ClientRegisterHandler;
 import me.dqn.handler.HeartBeatHandler;
 import me.dqn.handler.HeartTrigger;
 import me.dqn.server.channel.ClientChannelManager;
-import me.dqn.traffic.ClientTrafficCounter;
 import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,11 +78,11 @@ public class Server {
         NioEventLoopGroup boss = new NioEventLoopGroup();
         NioEventLoopGroup worker = new NioEventLoopGroup();
         registerBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
-                .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(65535))
+                .option(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator())
+                .option(ChannelOption.ALLOCATOR, new PooledByteBufAllocator())
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
                         ch.pipeline()
-                                .addLast(trafficShapingHandler)
                                 // 10秒内没`读`操作断开连接
                                 .addLast(new IdleStateHandler(configManager.getHeartBeatTime(), 0, 0, TimeUnit.SECONDS))
                                 .addLast(new HeartTrigger())
@@ -98,7 +95,6 @@ public class Server {
                                 .addLast(new ClientDataHandler());
                     }
                 });
-        trafficShapingHandler = new ClientTrafficCounter(registerBootstrap.config().childGroup(), 1000);
         registerBootstrap.bind(configManager.getRegisterPort()).sync();
     }
 

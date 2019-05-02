@@ -1,11 +1,15 @@
 package me.dqn.handler;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import me.dqn.protocol.TransData;
 import me.dqn.server.channel.ClientChannelManager;
+import me.dqn.traffic.ClientChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
 
 /**
  * 处理心跳信息
@@ -15,10 +19,14 @@ import org.slf4j.LoggerFactory;
  */
 public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(HeartBeatHandler.class);
+    private static final String CLIENT_TRAFFIC_COUNTER = "clienttrafficcounter";
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info("heartbeat server active");
+        long limit = 1073741824;
+        ctx.pipeline().addFirst(CLIENT_TRAFFIC_COUNTER, new ClientChannelCounter(ctx.channel(), limit, limit, 1000, 30000));
+        ClientChannelManager.clientChannelSpped.put(ctx.channel(), new HashMap<>());
     }
 
     @Override
@@ -40,6 +48,7 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("{} 心跳异常退出，{}", ctx.channel().remoteAddress(), cause);
+        removeCounterIfExist(ctx);
         ctx.close();
     }
 
@@ -47,5 +56,14 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("与客户端【{}】的连接断开", ctx.channel().remoteAddress());
         ClientChannelManager.removeChannel(ctx.channel());
+        ClientChannelManager.clientChannelSpped.remove(ctx.channel());
+        removeCounterIfExist(ctx);
+    }
+
+    private void removeCounterIfExist(ChannelHandlerContext context) {
+        ChannelHandler handler = context.pipeline().get(CLIENT_TRAFFIC_COUNTER);
+        if (handler != null) {
+            context.pipeline().remove(CLIENT_TRAFFIC_COUNTER);
+        }
     }
 }

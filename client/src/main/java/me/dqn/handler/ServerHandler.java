@@ -37,10 +37,26 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws InterruptedException {
         Long sess = ClientContext.getINSTANCE().getServerSessMap().get(ctx.channel());
         ByteBuf data = (ByteBuf) msg;
+        int TOP = 65535;
         int readableBytes = data.readableBytes();
-        logger.info("readable: {}", readableBytes);
         Channel clientChan = ClientContext.getINSTANCE().getClientFuture().channel();
-        byte[] bytes = new byte[readableBytes];
+        byte[] bytes;
+        while (TOP < readableBytes){
+            bytes = new byte[TOP];
+            data.readBytes(bytes);
+//            data.release();
+            clientChan.writeAndFlush(new TransData.Builder()
+                    .type(TransData.TYPE_DT)
+                    .sess(sess)
+                    .fromPort(1)
+                    .toPort(1)
+                    .dataSize(bytes.length)
+                    .data(bytes)
+                    .build());
+            readableBytes = data.readableBytes();
+        }
+        logger.info("last: {}",data.readableBytes());
+        bytes = new byte[data.readableBytes()];
         data.readBytes(bytes);
         data.release();
         clientChan.writeAndFlush(new TransData.Builder()
@@ -51,5 +67,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 .dataSize(bytes.length)
                 .data(bytes)
                 .build());
+
     }
 }

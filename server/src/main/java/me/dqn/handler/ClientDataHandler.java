@@ -9,6 +9,11 @@ import me.dqn.server.channel.OuterChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 /**
  * 注册client信息（获取channel）
  *
@@ -34,7 +39,6 @@ public class ClientDataHandler extends ChannelInboundHandlerAdapter {
             // 处理数据
             dispatchData(ctx, transData);
         } else if (transData.getType() == TransData.TYPT_DIS) {
-//            logger.info("client请求关闭外部连接");
             Channel channel = OuterChannelManager.outerSession.get(transData.getSess());
             if (channel != null) {
                 channel.close();

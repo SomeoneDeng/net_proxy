@@ -60,7 +60,7 @@ public class Client {
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.SO_KEEPALIVE, true)
-                    .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(65535))
+                    .option(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator())
                     .handler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         public void initChannel(NioSocketChannel ch) {
@@ -74,17 +74,17 @@ public class Client {
                                     .addLast(new DataHandler(Client.this));
                         }
                     });
-
+            // TODO: 2019/4/20 客户端为每一个connect开一个channel，避免卡住
             future = b.connect(HOST, PORT).sync();
             future.addListener((ChannelFutureListener) future1 -> {
                 if (future1.isSuccess()) {
                     logger.info("[{}]连接成功", HOST);
+                    clientInfos.forEach(this::registerToServer);
                 } else {
                     logger.info("[{}]连接失败", HOST);
                 }
             });
             // 注册
-            clientInfos.forEach(this::registerToServer);
             ClientContext.getINSTANCE().setClientFuture(future);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {

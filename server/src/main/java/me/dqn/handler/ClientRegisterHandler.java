@@ -1,19 +1,14 @@
 package me.dqn.handler;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.traffic.GlobalChannelTrafficShapingHandler;
 import me.dqn.protocol.TransData;
 import me.dqn.server.Server;
 import me.dqn.server.channel.ClientChannelManager;
 import me.dqn.server.channel.OuterChannelManager;
-import me.dqn.traffic.OuterTrafficCounter;
 import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +28,7 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
                 logger.info("处理客户端注册");
                 // 记录channel id
                 Server.instance().channelIdToRealPort.put(ctx.channel().id(), transData.getToPort());
+                ServerConfig.portMapping.put(transData.getToPort(), transData.getFromPort());
                 ClientChannelManager.put(transData.getToPort() + ":" + transData.getFromPort(), ctx.channel());
                 Server.instance().onlineCount();
                 openOuterPort(transData.getToPort());
@@ -50,13 +46,11 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
             NioEventLoopGroup boss = new NioEventLoopGroup();
             NioEventLoopGroup worker = new NioEventLoopGroup();
             bootstrap.group(boss, worker);
-            GlobalChannelTrafficShapingHandler trafficShapingHandler =
-                    new OuterTrafficCounter(bootstrap.config().childGroup(), 5000, port);
-            ChannelFuture future = bootstrap.channel(NioServerSocketChannel.class)
+            ChannelFuture future = bootstrap
+                    .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(trafficShapingHandler);
                             ch.pipeline().addLast(new OuterHandler());
                         }
                     })
