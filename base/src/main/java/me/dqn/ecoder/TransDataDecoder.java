@@ -18,7 +18,6 @@ public class TransDataDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-//        logger.info("client readable: {}",in.readableBytes());
         if (in == null) return;
         int size = in.readInt();
         int type = in.readInt();

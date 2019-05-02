@@ -2,16 +2,19 @@ package me.dqn.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import me.dqn.protocol.TransData;
 import me.dqn.server.channel.ClientChannelManager;
 import me.dqn.server.channel.OuterChannelManager;
+import me.dqn.traffic.OuterChannelCounter;
 import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 
 /**
  * 处理用户请求，tcp转发到client
@@ -22,20 +25,26 @@ import java.net.InetSocketAddress;
 public class OuterHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(OuterHandler.class);
     private final int BATCH_SIZE = 1024 * 1024;
+    private static final String TRAFFIC_COUNTER = "trafficcounter";
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // session
+        // 添加流量监控
+        // 1 * 1024 * 1024 * 1024
+        long limit = 1073741824;
+        ctx.pipeline().addFirst(TRAFFIC_COUNTER, new OuterChannelCounter(ctx.channel(), limit, limit, 1000, 30000));
+        OuterChannelManager.outerChannelSpeed.put(ctx.channel(), new HashMap<>());
         Long channelSession = Long.valueOf(ctx.channel().id().asShortText(), 16);
-//        logger.info("outer port: {}, sess:{}", ctx.channel().localAddress(), channelSession);
         OuterChannelManager.outerSession.put(channelSession, ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-//        logger.info("连接处理结束");
+        removeCounterIfExist(ctx);
         long sess = Long.valueOf(ctx.channel().id().asShortText(), 16);
         OuterChannelManager.outerSession.remove(sess);
+        OuterChannelManager.outerChannelSpeed.remove(ctx.channel());
         // 通知client关闭真实连接
         InetSocketAddress address = (InetSocketAddress) ctx.channel().localAddress();
         int port = ServerConfig.portMapping.get(address.getPort());
@@ -48,6 +57,7 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
                 .dataSize(0)
                 .data(new byte[0])
                 .build());
+        ctx.fireChannelInactive();
     }
 
     @Override
@@ -61,7 +71,6 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         byte[] data = new byte[readableBytes];
         byteBuf.readBytes(data);
         byteBuf.release();
-//        logger.info("write to client,length:{}, sess:{}", readableBytes, sessId);
         channel.writeAndFlush(new TransData.Builder()
                 .type(TransData.TYPE_DT)
                 .sess(sessId)
@@ -75,5 +84,16 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 //        logger.info("连接出现异常，{}",cause.getMessage());
+        removeCounterIfExist(ctx);
+        long sess = Long.valueOf(ctx.channel().id().asShortText(), 16);
+        OuterChannelManager.outerSession.remove(sess);
+        OuterChannelManager.outerChannelSpeed.remove(ctx.channel());
+    }
+
+    private void removeCounterIfExist(ChannelHandlerContext context) {
+        ChannelHandler handler = context.pipeline().get(TRAFFIC_COUNTER);
+        if (handler != null) {
+            context.pipeline().remove(TRAFFIC_COUNTER);
+        }
     }
 }

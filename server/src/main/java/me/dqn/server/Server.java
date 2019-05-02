@@ -18,7 +18,6 @@ import me.dqn.handler.ClientRegisterHandler;
 import me.dqn.handler.HeartBeatHandler;
 import me.dqn.handler.HeartTrigger;
 import me.dqn.server.channel.ClientChannelManager;
-import me.dqn.traffic.ClientTrafficCounter;
 import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +83,6 @@ public class Server {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
                         ch.pipeline()
-                                .addLast(trafficShapingHandler)
                                 // 10秒内没`读`操作断开连接
                                 .addLast(new IdleStateHandler(configManager.getHeartBeatTime(), 0, 0, TimeUnit.SECONDS))
                                 .addLast(new HeartTrigger())
@@ -97,7 +95,6 @@ public class Server {
                                 .addLast(new ClientDataHandler());
                     }
                 });
-        trafficShapingHandler = new ClientTrafficCounter(registerBootstrap.config().childGroup(), 1000);
         registerBootstrap.bind(configManager.getRegisterPort()).sync();
     }
 

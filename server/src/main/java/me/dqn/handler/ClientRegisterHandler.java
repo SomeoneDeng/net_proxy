@@ -5,12 +5,10 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.traffic.GlobalChannelTrafficShapingHandler;
 import me.dqn.protocol.TransData;
 import me.dqn.server.Server;
 import me.dqn.server.channel.ClientChannelManager;
 import me.dqn.server.channel.OuterChannelManager;
-import me.dqn.traffic.OuterTrafficCounter;
 import me.dqn.util.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +28,6 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
                 logger.info("处理客户端注册");
                 // 记录channel id
                 Server.instance().channelIdToRealPort.put(ctx.channel().id(), transData.getToPort());
-                // TODO: 2019/4/20 在这里往  portMapping 放东西就好了，服务端就不用配置了，客户端来多少开多少
                 ServerConfig.portMapping.put(transData.getToPort(), transData.getFromPort());
                 ClientChannelManager.put(transData.getToPort() + ":" + transData.getFromPort(), ctx.channel());
                 Server.instance().onlineCount();
@@ -49,15 +46,11 @@ public class ClientRegisterHandler extends ChannelInboundHandlerAdapter {
             NioEventLoopGroup boss = new NioEventLoopGroup();
             NioEventLoopGroup worker = new NioEventLoopGroup();
             bootstrap.group(boss, worker);
-            GlobalChannelTrafficShapingHandler trafficShapingHandler =
-                    new OuterTrafficCounter(bootstrap.config().childGroup(), 5000, port);
             ChannelFuture future = bootstrap
                     .channel(NioServerSocketChannel.class)
-                    .option(ChannelOption.SO_KEEPALIVE, true)
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(trafficShapingHandler);
                             ch.pipeline().addLast(new OuterHandler());
                         }
                     })

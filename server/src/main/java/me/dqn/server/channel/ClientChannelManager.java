@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -16,6 +17,7 @@ public class ClientChannelManager {
     private static Logger logger = LoggerFactory.getLogger(ClientChannelManager.class);
 
     private static ConcurrentHashMap<String, Channel> channelMap = new ConcurrentHashMap<>(32);
+    public static ConcurrentHashMap<Channel, Map<String, Long>> clientChannelSpped = new ConcurrentHashMap<>();
 
     public static void put(String key, Channel channel) {
         channelMap.put(key, channel);

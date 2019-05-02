@@ -52,4 +52,23 @@ public class StatusHandler extends ChannelInboundHandlerAdapter {
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
         context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
+
+    /**
+     * 获取客户端的连接信息，
+     * 多少个连接，传输速度
+     *
+     * @param context
+     */
+    private void handlerGetClientStatus(ChannelHandlerContext context) {
+
+    }
+
+    /**
+     * 获取外部连接的状态
+     *
+     * @param context
+     */
+    private void handlerGetOuterStatus(ChannelHandlerContext context) {
+
+    }
 }

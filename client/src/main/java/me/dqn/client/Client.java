@@ -79,12 +79,12 @@ public class Client {
             future.addListener((ChannelFutureListener) future1 -> {
                 if (future1.isSuccess()) {
                     logger.info("[{}]连接成功", HOST);
+                    clientInfos.forEach(this::registerToServer);
                 } else {
                     logger.info("[{}]连接失败", HOST);
                 }
             });
             // 注册
-            clientInfos.forEach(this::registerToServer);
             ClientContext.getINSTANCE().setClientFuture(future);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {
