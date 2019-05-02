@@ -10,6 +10,7 @@ import me.dqn.server.channel.ClientChannelManager;
 import me.dqn.server.channel.OuterChannelManager;
 import me.dqn.traffic.OuterChannelCounter;
 import me.dqn.util.ServerConfig;
+import me.dqn.util.StateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         // 1 * 1024 * 1024 * 1024
         long limit = 1073741824;
         ctx.pipeline().addFirst(TRAFFIC_COUNTER, new OuterChannelCounter(ctx.channel(), limit, limit, 1000, 30000));
-        OuterChannelManager.outerChannelSpeed.put(ctx.channel(), new HashMap<>());
+        OuterChannelManager.outerChannelSpeed.put(ctx.channel().id().asShortText(), new StateInfo());
         Long channelSession = Long.valueOf(ctx.channel().id().asShortText(), 16);
         OuterChannelManager.outerSession.put(channelSession, ctx.channel());
     }
@@ -44,7 +45,6 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         removeCounterIfExist(ctx);
         long sess = Long.valueOf(ctx.channel().id().asShortText(), 16);
         OuterChannelManager.outerSession.remove(sess);
-        OuterChannelManager.outerChannelSpeed.remove(ctx.channel());
         // 通知client关闭真实连接
         InetSocketAddress address = (InetSocketAddress) ctx.channel().localAddress();
         int port = ServerConfig.portMapping.get(address.getPort());
@@ -87,12 +87,13 @@ public class OuterHandler extends ChannelInboundHandlerAdapter {
         removeCounterIfExist(ctx);
         long sess = Long.valueOf(ctx.channel().id().asShortText(), 16);
         OuterChannelManager.outerSession.remove(sess);
-        OuterChannelManager.outerChannelSpeed.remove(ctx.channel());
+
     }
 
     private void removeCounterIfExist(ChannelHandlerContext context) {
         ChannelHandler handler = context.pipeline().get(TRAFFIC_COUNTER);
         if (handler != null) {
+            OuterChannelManager.outerChannelSpeed.remove(context.channel().id().asShortText());
             context.pipeline().remove(TRAFFIC_COUNTER);
         }
     }

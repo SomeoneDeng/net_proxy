@@ -2,6 +2,7 @@ package me.dqn.server.channel;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import me.dqn.util.StateInfo;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +21,7 @@ public class OuterChannelManager {
     // channel -> id
     public static ConcurrentHashMap<Channel, Long> outerSessionMap = new ConcurrentHashMap<>();
     // 记录每个channel当前读写速度
-    public static ConcurrentHashMap<Channel, Map<String, Long>> outerChannelSpeed = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, StateInfo> outerChannelSpeed = new ConcurrentHashMap<>();
 
     public static ChannelFuture getChannel(Integer port) {
         return outerFutures.get(port);

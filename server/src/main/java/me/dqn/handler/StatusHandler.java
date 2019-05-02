@@ -1,23 +1,35 @@
 package me.dqn.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import me.dqn.interfaces.HttpHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 /**
- * 用于处理服务运行状态请求
+ * 外部请求的channel状态运行状态请求
  *
  * @author dqn
  * created at 2019/4/11 12:28
  */
 public class StatusHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(StatusHandler.class);
+    private Map<String, HttpHandle> handlers;
+
+    public StatusHandler(Map<String, HttpHandle> handlers) {
+        this.handlers = handlers;
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        super.channelActive(ctx);
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -27,48 +39,24 @@ public class StatusHandler extends ChannelInboundHandlerAdapter {
         FullHttpRequest request = (FullHttpRequest) msg;
         try {
             String uri = request.uri();
-            if (!uri.equalsIgnoreCase("/test")) {
-                handler(ctx, "错误的路径", HttpResponseStatus.FORBIDDEN);
+            if (!handlers.containsKey(uri)) {
+                handlerError(ctx, "错误的路径", HttpResponseStatus.FORBIDDEN, msg);
             }
-            if (!request.method().equals(HttpMethod.GET)) {
-                handler(ctx, "错误的方法", HttpResponseStatus.FORBIDDEN);
+            HttpHandle httpHandle = handlers.get(uri);
+            if (httpHandle != null) {
+                httpHandle.handler(ctx, HttpResponseStatus.OK);
             }
-            handler(ctx, "{\"aa\":12313}", HttpResponseStatus.OK);
         } catch (Exception e) {
             logger.info("处理请求失败：{}", e.getMessage());
-        } finally {
-            request.release();
+            e.printStackTrace();
         }
     }
 
-    private String getBody(FullHttpRequest request) {
-        ByteBuf buf = request.content();
-        return buf.toString(CharsetUtil.UTF_8);
-    }
-
-    private void handler(ChannelHandlerContext context, String data, HttpResponseStatus status) {
+    private void handlerError(ChannelHandlerContext context, String data, HttpResponseStatus status, Object msg) {
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status,
                 Unpooled.copiedBuffer(data, CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
         context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    /**
-     * 获取客户端的连接信息，
-     * 多少个连接，传输速度
-     *
-     * @param context
-     */
-    private void handlerGetClientStatus(ChannelHandlerContext context) {
-
-    }
-
-    /**
-     * 获取外部连接的状态
-     *
-     * @param context
-     */
-    private void handlerGetOuterStatus(ChannelHandlerContext context) {
-
+        context.fireChannelRead(msg);
     }
 }

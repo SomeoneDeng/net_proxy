@@ -4,10 +4,9 @@ import io.netty.channel.Channel;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.handler.traffic.TrafficCounter;
 import me.dqn.server.channel.ClientChannelManager;
+import me.dqn.util.StateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 
 /**
@@ -27,9 +26,11 @@ public class ClientChannelCounter extends ChannelTrafficShapingHandler {
     protected void doAccounting(TrafficCounter counter) {
         logger.info("client[{}] wrote bytes: {}, read bytes: {}", channel.id().asShortText(),
                 counter.lastWrittenBytes(), counter.lastReadBytes());
-        Map<String, Long> speedMap = ClientChannelManager.clientChannelSpped.get(channel);
-        speedMap.put("read", counter.lastReadBytes());
-        speedMap.put("write", counter.lastWrittenBytes());
+        StateInfo stateInfo = ClientChannelManager.clientChannelSpeed.get(channel.id().asShortText());
+        stateInfo.setChannelId(channel.id().asShortText());
+        stateInfo.setFrom(channel.remoteAddress().toString());
+        stateInfo.setWriteSpeed(counter.lastWrittenBytes());
+        stateInfo.setReadSpeed(counter.lastReadBytes());
         super.doAccounting(counter);
     }
 }

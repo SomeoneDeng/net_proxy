@@ -6,6 +6,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import me.dqn.protocol.TransData;
 import me.dqn.server.channel.ClientChannelManager;
 import me.dqn.traffic.ClientChannelCounter;
+import me.dqn.util.StateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
         logger.info("heartbeat server active");
         long limit = 1073741824;
         ctx.pipeline().addFirst(CLIENT_TRAFFIC_COUNTER, new ClientChannelCounter(ctx.channel(), limit, limit, 1000, 30000));
-        ClientChannelManager.clientChannelSpped.put(ctx.channel(), new HashMap<>());
+        ClientChannelManager.clientChannelSpeed.put(ctx.channel().id().asShortText(), new StateInfo());
     }
 
     @Override
@@ -56,13 +57,13 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("与客户端【{}】的连接断开", ctx.channel().remoteAddress());
         ClientChannelManager.removeChannel(ctx.channel());
-        ClientChannelManager.clientChannelSpped.remove(ctx.channel());
         removeCounterIfExist(ctx);
     }
 
     private void removeCounterIfExist(ChannelHandlerContext context) {
         ChannelHandler handler = context.pipeline().get(CLIENT_TRAFFIC_COUNTER);
         if (handler != null) {
+            ClientChannelManager.clientChannelSpeed.remove(context.channel().id().asShortText());
             context.pipeline().remove(CLIENT_TRAFFIC_COUNTER);
         }
     }
