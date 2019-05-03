@@ -25,7 +25,6 @@ import java.util.HashMap;
  */
 public class OuterHandler extends ChannelInboundHandlerAdapter {
     Logger logger = LoggerFactory.getLogger(OuterHandler.class);
-    private final int BATCH_SIZE = 1024 * 1024;
     private static final String TRAFFIC_COUNTER = "trafficcounter";
 
     @Override

@@ -9,15 +9,17 @@ public class StateInfo {
     private Long readSpeed;
     private Long writeSpeed;
     private String channelId;
+    private Long  time;
 
     public StateInfo() {
     }
 
-    public StateInfo(String from, Long readSpeed, Long writeSpeed, String channelId) {
+    public StateInfo(String from, Long readSpeed, Long writeSpeed, String channelId, Long time) {
         this.from = from;
         this.readSpeed = readSpeed;
         this.writeSpeed = writeSpeed;
         this.channelId = channelId;
+        this.time = time;
     }
 
     public String getFrom() {
@@ -50,5 +52,13 @@ public class StateInfo {
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
+    }
+
+    public Long getTime() {
+        return time;
+    }
+
+    public void setTime(Long time) {
+        this.time = time;
     }
 }

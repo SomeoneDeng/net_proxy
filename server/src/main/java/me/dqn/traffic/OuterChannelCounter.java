@@ -30,6 +30,7 @@ public class OuterChannelCounter extends ChannelTrafficShapingHandler {
         stateInfo.setReadSpeed(counter.lastReadBytes());
         stateInfo.setWriteSpeed(counter.lastWrittenBytes());
         stateInfo.setChannelId(channel.id().asShortText());
+        stateInfo.setTime(counter.lastTime());
         super.doAccounting(counter);
     }
 }

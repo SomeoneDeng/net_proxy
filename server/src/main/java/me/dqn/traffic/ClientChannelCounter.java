@@ -31,6 +31,7 @@ public class ClientChannelCounter extends ChannelTrafficShapingHandler {
         stateInfo.setFrom(channel.remoteAddress().toString());
         stateInfo.setWriteSpeed(counter.lastWrittenBytes());
         stateInfo.setReadSpeed(counter.lastReadBytes());
+        stateInfo.setTime(counter.lastTime());
         super.doAccounting(counter);
     }
 }

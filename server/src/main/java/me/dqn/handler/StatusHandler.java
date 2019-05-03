@@ -42,6 +42,15 @@ public class StatusHandler extends ChannelInboundHandlerAdapter {
             if (!handlers.containsKey(uri)) {
                 handlerError(ctx, "错误的路径", HttpResponseStatus.FORBIDDEN, msg);
             }
+            // options method,cross origin request
+            if (request.method().equals(HttpMethod.OPTIONS)) {
+                FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+                response.headers().set("Access-Control-Allow-Headers", "access-control-allow-headers,access-control-allow-methods,access-control-allow-origin");
+                response.headers().set("Access-Control-Allow-Origin", "*");
+                response.headers().set("access-control-allow-methods", "GET,POST");
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                return;
+            }
             HttpHandle httpHandle = handlers.get(uri);
             if (httpHandle != null) {
                 httpHandle.handler(ctx, HttpResponseStatus.OK);
